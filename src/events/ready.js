@@ -1,5 +1,11 @@
 // src/events/ready.js
 module.exports = (client) => {
-  console.log(`Logged in as ${client.user.tag}! Ready to set sail!`);
-  client.user.setActivity('the Grand Line', { type: 'WATCHING' }); // Types: PLAYING, WATCHING, LISTENING, COMPETING
-};
+  // Set bot activity status
+        client.user.setActivity('the Grand Line 🏴‍☠️', { 
+            type: ActivityType.Watching 
+        });
+
+        // Log some statistics
+        const totalUsers = client.guilds.cache.reduce((acc, guild) => acc + guild.memberCount, 0);
+                console.log(`[BOT] Monitoring ${totalUsers} total users across all guilds`);
+        }
