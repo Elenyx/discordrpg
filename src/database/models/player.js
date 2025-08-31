@@ -7,10 +7,11 @@ module.exports = (sequelize) => {
       autoIncrement: true,
       primaryKey: true,
     },
-    discord_id: {
+    discordId: {
       type: DataTypes.STRING,
       allowNull: false,
       unique: true,
+      field: 'discord_id', // Map to database column
     },
     race: {
       type: DataTypes.STRING,
