@@ -1,17 +1,8 @@
 const { SlashCommandBuilder } = require('discord.js');
 
 // V2 component helpers
-function buildStepComponents({ title, description, selectId, options, step }) {
+function buildSelectRow({ selectId, options, title }) {
   return [
-    {
-      type: 9, // Section
-      components: [
-        {
-          type: 10, // Text Display
-          content: `**Step ${step}: ${title}**\n${description}`,
-        },
-      ],
-    },
     {
       type: 1, // Action Row
       components: [
@@ -33,17 +24,8 @@ function buildStepComponents({ title, description, selectId, options, step }) {
   ];
 }
 
-function buildSummarySection({ race, origin, dream }) {
+function buildSummaryRow() {
   return [
-    {
-      type: 9,
-      components: [
-        {
-          type: 10,
-          content: `**Character Summary**\nRace: ${race}\nOrigin: ${origin}\nDream: ${dream}`,
-        },
-      ],
-    },
     {
       type: 1, // Action Row
       components: [
@@ -99,15 +81,17 @@ module.exports = {
       return interaction.reply({ content: 'You already have a character!', ephemeral: true });
     }
 
-    // Step 1: Race selection (Section + String Select)
+    // Step 1: Race selection (Embed + String Select)
     await interaction.reply({
-      content: null,
-      components: buildStepComponents({
-        title: 'Race',
+      embeds: [{
+        title: 'Step 1: Race',
         description: 'Choose your character\'s race. Each race has unique traits!',
+        color: 0x1e90ff,
+      }],
+      components: buildSelectRow({
         selectId: 'select_race',
         options: races,
-        step: 1,
+        title: 'Race',
       }),
       flags: 1, // Components V2
       ephemeral: true,
@@ -126,13 +110,15 @@ module.exports = {
 
     // Step 2: Origin selection
     await interaction.followUp({
-      content: null,
-      components: buildStepComponents({
-        title: 'Origin',
+      embeds: [{
+        title: 'Step 2: Origin',
         description: 'Where do you hail from? Each sea has its own story.',
+        color: 0x1e90ff,
+      }],
+      components: buildSelectRow({
         selectId: 'select_origin',
         options: origins,
-        step: 2,
+        title: 'Origin',
       }),
       flags: 1,
       ephemeral: true,
@@ -151,13 +137,15 @@ module.exports = {
 
     // Step 3: Dream selection
     await interaction.followUp({
-      content: null,
-      components: buildStepComponents({
-        title: 'Dream',
+      embeds: [{
+        title: 'Step 3: Dream',
         description: 'What is your ultimate goal? Your dream shapes your journey.',
+        color: 0x1e90ff,
+      }],
+      components: buildSelectRow({
         selectId: 'select_dream',
         options: dreams,
-        step: 3,
+        title: 'Dream',
       }),
       flags: 1,
       ephemeral: true,
@@ -176,8 +164,12 @@ module.exports = {
 
     // Step 4: Summary and confirmation
     await interaction.followUp({
-      content: null,
-      components: buildSummarySection({ race, origin, dream }),
+      embeds: [{
+        title: 'Character Summary',
+        description: `Race: **${race}**\nOrigin: **${origin}**\nDream: **${dream}**`,
+        color: 0x1e90ff,
+      }],
+      components: buildSummaryRow(),
       flags: 1,
       ephemeral: true,
     });
