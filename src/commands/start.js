@@ -1,4 +1,13 @@
-const { SlashCommandBuilder, MessageFlags, ComponentType } = require('discord.js');
+const {
+  SlashCommandBuilder,
+  MessageFlags,
+  ButtonStyle,
+  StringSelectMenuBuilder,
+  TextDisplayBuilder,
+  SectionBuilder,
+  ContainerBuilder,
+  ButtonBuilder
+} = require('discord.js');
 const { Player } = require('../../database');
 
 const races = [
@@ -25,74 +34,54 @@ const dreams = [
   { label: 'Be Strongest', value: 'Strongest', description: 'Become the world\'s strongest fighter' },
 ];
 
-// Helper function to build Components V2 container with text and select menu
+
+// Helper function to build Components V2 container with text and select menu using builders
 function buildStepContainer(step, title, description, selectId, options) {
-  return {
-    type: 10, // Container type for V2
-    accent_color: 0x3498db,
-    components: [
-      {
-        type: 11, // Text Display type for V2
-        content: `**Step ${step}: ${title}**\n${description}`
-      },
-      {
-        type: 1, // Action Row
-        components: [
-          {
-            type: 3, // String Select Menu
-            custom_id: selectId,
-            placeholder: `Choose your ${title.toLowerCase()}`,
-            options: options
-          }
-        ]
-      }
-    ]
-  };
+  const textDisplay = new TextDisplayBuilder()
+    .setContent(`**Step ${step}: ${title}**\n${description}`);
+  const selectMenu = new StringSelectMenuBuilder()
+    .setCustomId(selectId)
+    .setPlaceholder(`Choose your ${title.toLowerCase()}`)
+    .addOptions(options);
+  const section = new SectionBuilder()
+    .addTextDisplayComponents(textDisplay)
+    .setSelectMenuAccessory(selectMenu);
+  const container = new ContainerBuilder()
+    .setAccentColor(0x3498db)
+    .addComponents(section);
+  return container;
 }
 
-// Helper function to build summary container with buttons
+// Helper function to build summary container with buttons using builders
 function buildSummaryContainer(race, origin, dream) {
-  return {
-    type: 10, // Container type for V2
-    accent_color: 0x27ae60,
-    components: [
-      {
-        type: 11, // Text Display type for V2
-        content: `**🏴‍☠️ Character Summary**\n**Race:** ${race}\n**Origin:** ${origin}\n**Dream:** ${dream}\n\nReady to begin your adventure?`
-      },
-      {
-        type: 1, // Action Row
-        components: [
-          {
-            type: 2, // Button
-            custom_id: 'confirm_start',
-            label: '⚓ Set Sail!',
-            style: 3 // Success style
-          },
-          {
-            type: 2, // Button
-            custom_id: 'cancel_start',
-            label: '❌ Cancel',
-            style: 4 // Danger style
-          }
-        ]
-      }
-    ]
-  };
+  const textDisplay = new TextDisplayBuilder()
+    .setContent(`**🏴‍☠️ Character Summary**\n**Race:** ${race}\n**Origin:** ${origin}\n**Dream:** ${dream}\n\nReady to begin your adventure?`);
+  const confirmButton = new ButtonBuilder()
+    .setCustomId('confirm_start')
+    .setLabel('⚓ Set Sail!')
+    .setStyle(ButtonStyle.Success);
+  const cancelButton = new ButtonBuilder()
+    .setCustomId('cancel_start')
+    .setLabel('❌ Cancel')
+    .setStyle(ButtonStyle.Danger);
+  const section = new SectionBuilder()
+    .addTextDisplayComponents(textDisplay)
+    .setButtonAccessory(confirmButton)
+    .addButtonAccessory(cancelButton);
+  const container = new ContainerBuilder()
+    .setAccentColor(0x27ae60)
+    .addComponents(section);
+  return container;
 }
 
-// Helper function to build simple text display container
+// Helper function to build simple text display container using builders
 function buildTextContainer(content, accentColor = 0x3498db) {
-  return {
-    type: 10, // Container type for V2
-    accent_color: accentColor,
-    components: [
-      {
-        type: 11, // Text Display type for V2
-        content: content
-      }
-    ]
-  };
+  const textDisplay = new TextDisplayBuilder().setContent(content);
+  const section = new SectionBuilder().addTextDisplayComponents(textDisplay);
+  const container = new ContainerBuilder()
+    .setAccentColor(accentColor)
+    .addComponents(section);
+  return container;
 }
 
 module.exports = {
@@ -113,10 +102,11 @@ module.exports = {
         });
       }
 
+
       // Step 1: Race selection
       const raceContainer = buildStepContainer(
-        1, 
-        'Race Selection', 
+        1,
+        'Race Selection',
         'Choose your character\'s race. Each race has unique traits and abilities!',
         'select_race',
         races
@@ -191,7 +181,6 @@ module.exports = {
           '⛵ **Character creation cancelled.**\nYou can start again anytime with `/start`!',
           0x95a5a6
         );
-        
         await confirm.update({
           components: [cancelContainer],
           flags: MessageFlags.IsComponentsV2

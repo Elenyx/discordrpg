@@ -2,204 +2,413 @@
 applyTo: '**'
 ---
 
-# Discord Bot Development - Copilot Instructions
+# Discord.js Display Components - Copilot Instructions
 
-## Discord API Component Types
+This document provides comprehensive guidance for working with Discord's Display Components system using Discord.js. Use this as a reference when building Discord bots that utilize the new display components.
 
-### Components V1 (Standard Components)
-Always use these component types for standard interactive elements:
-- `type: 1` - **Action Row** (Container for other components, max 5 per message)
-- `type: 2` - **Button** (Interactive button)
-- `type: 3` - **String Select Menu** (Dropdown with string options)
-- `type: 4` - **Text Input** (Only for modals)
-- `type: 5` - **User Select Menu** (Select users)
-- `type: 6` - **Role Select Menu** (Select roles)
-- `type: 7` - **Mentionable Select Menu** (Select users/roles)
-- `type: 8` - **Channel Select Menu** (Select channels)
+## Overview
 
-### Components V2 (Display Components)
-For rich display components, you MUST use the `MessageFlags.IsComponentsV2` flag:
-- **Text Display** - Use `TextDisplayBuilder()` class
-- **Section** - Use `SectionBuilder()` class (contains 1-3 Text Display components + optional accessory)
-- **Container** - Use `ContainerBuilder()` class (groups components in a rounded box)
-- **Thumbnail** - Use `ThumbnailBuilder()` class (image accessory for sections)
-- **Media Gallery** - Use `MediaGalleryBuilder()` class (grid of up to 10 images)
-- **File** - Use `FileBuilder()` class (display uploaded files)
-- **Separator** - Use `SeparatorBuilder()` class (visual spacing/divider)
+Display components provide a comprehensive set of layout and content elements that go beyond traditional Discord embeds. They offer more styling and formatting options for your app messages.
 
-## Components V2 Usage Rules
+### Key Requirements
 
-### Required Setup
-```javascript
-const { MessageFlags } = require('discord.js');
-
-// Always include this flag when using display components
-await interaction.reply({
-  components: [/* your components */],
-  flags: MessageFlags.IsComponentsV2,
-  ephemeral: true
-});
-```
+To use display components, you **must**:
+- Pass the `MessageFlags.IsComponentsV2` flag when sending a message
+- Only use this flag when sending messages, not when deferring interaction responses
 
 ### Important Limitations
-When using `MessageFlags.IsComponentsV2`:
-- ❌ **Cannot** send `content`, `poll`, `embeds`, or `stickers`
-- ❌ **Cannot** opt out when editing a message
-- ✅ **Can** opt into V2 when editing by setting content/embeds/etc to `null`
-- 📏 Max 40 total components (nested components count)
-- 📝 Max 4000 characters across all text display components
-- 📎 All files must be referenced in components
 
-### Example: Text Display Component
+When opting into display components (`IsComponentsV2`):
+- ❌ Cannot send `content`, `poll`, `embeds`, or `stickers`
+- ❌ Cannot opt out when editing a message
+- ✅ Can opt in when editing by explicitly setting `content`, `poll`, `embeds`, and `stickers` to `null`
+- 📊 Maximum 40 total components (nested components count)
+- 📝 Maximum 4000 characters across all text display components
+- 📎 All attached files must be explicitly referenced in a component
+
+### Component ID System
+
+- Optional `id` field: 32-bit integer identifier for components
+- Different from `custom_id` used for interactive components
+- Discord auto-populates missing IDs sequentially starting from 1
+- Value `0` is treated as empty
+- Explicitly specify IDs if you need to reference them later
+
+## Component Types
+
+### 1. Text Display Components
+
+Replace the traditional `content` field with markdown-formatted text.
+
 ```javascript
 const { TextDisplayBuilder, MessageFlags } = require('discord.js');
 
-const textDisplay = new TextDisplayBuilder()
-  .setContent('**Step 1: Race**\nChoose your character\'s race. Each race has unique traits!');
+const exampleTextDisplay = new TextDisplayBuilder()
+    .setContent('This text supports **any __markdown__** formatting!');
 
-await interaction.reply({
-  components: [textDisplay],
-  flags: MessageFlags.IsComponentsV2,
-  ephemeral: true
+await channel.send({
+    components: [exampleTextDisplay],
+    flags: MessageFlags.IsComponentsV2,
 });
 ```
 
-### Example: Section with Interactive Components
+**⚠️ Warning**: User and role mentions in text display components will notify users! Control mentions with `allowedMentions`.
+
+### 2. Section Components
+
+Combine 1-3 Text Display components with an accessory (image thumbnail or button).
+
 ```javascript
 const { SectionBuilder, ButtonStyle, MessageFlags } = require('discord.js');
 
-const section = new SectionBuilder()
-  .addTextDisplayComponents(
-    textDisplay => textDisplay.setContent('**Character Summary**\nRace: Human\nOrigin: East Blue')
-  )
-  .setButtonAccessory(
-    button => button
-      .setCustomId('confirm_character')
-      .setLabel('Confirm')
-      .setStyle(ButtonStyle.Success)
-  );
+const exampleSection = new SectionBuilder()
+    .addTextDisplayComponents(
+        textDisplay => textDisplay
+            .setContent('First text component with **markdown**'),
+        textDisplay => textDisplay
+            .setContent('Second text component'),
+        textDisplay => textDisplay
+            .setContent('Third text component with button accessory!')
+    )
+    .setButtonAccessory(
+        button => button
+            .setCustomId('exampleButton')
+            .setLabel('Button inside Section')
+            .setStyle(ButtonStyle.Primary)
+    );
 
-await interaction.reply({
-  components: [section],
-  flags: MessageFlags.IsComponentsV2,
-  ephemeral: true
+await channel.send({
+    components: [exampleSection],
+    flags: MessageFlags.IsComponentsV2,
 });
 ```
 
-## Best Practices
+**Use Cases**:
+- Rich text content with interactive elements
+- Combining multiple paragraphs with a call-to-action button
+- Text with accompanying thumbnail image
 
-### Component Organization
-1. **Action Rows**: Use for grouping interactive components (buttons, selects)
-2. **Sections**: Use for text + single accessory (button or thumbnail)
-3. **Containers**: Use for grouping multiple components in a visual box
-4. **Text Display**: Use for standalone formatted text
+### 3. Thumbnail Components
+
+Visual elements similar to embed thumbnails, used as accessories in Section components.
+
+```javascript
+const { AttachmentBuilder, SectionBuilder, MessageFlags } = require('discord.js');
+
+const file = new AttachmentBuilder('../assets/image.png');
+
+const exampleSection = new SectionBuilder()
+    .addTextDisplayComponents(
+        textDisplay => textDisplay
+            .setContent('Text with thumbnail accessory')
+    )
+    .setThumbnailAccessory(
+        thumbnail => thumbnail
+            .setDescription('Alt text for accessibility')
+            .setURL('attachment://image.png') // Or external URL
+    );
+
+await channel.send({
+    components: [exampleSection],
+    files: [file],
+    flags: MessageFlags.IsComponentsV2,
+});
+```
+
+**Features**:
+- Alt text support for accessibility
+- Spoiler marking capability
+- Attachment or external URL support
+
+### 4. Media Gallery Components
+
+Display up to 10 media attachments in a grid layout.
+
+```javascript
+const { AttachmentBuilder, MediaGalleryBuilder, MessageFlags } = require('discord.js');
+
+const file = new AttachmentBuilder('../assets/image.png');
+
+const exampleGallery = new MediaGalleryBuilder()
+    .addItems(
+        mediaGalleryItem => mediaGalleryItem
+            .setDescription('Alt text for attached image')
+            .setURL('attachment://image.png'),
+        mediaGalleryItem => mediaGalleryItem
+            .setDescription('Alt text for external image')
+            .setURL('https://i.imgur.com/AfFp7pu.png')
+            .setSpoiler(true) // Displays as blurred
+    );
+
+await channel.send({
+    components: [exampleGallery],
+    files: [file],
+    flags: MessageFlags.IsComponentsV2,
+});
+```
+
+**Best Practices**:
+- Always provide alt text for accessibility
+- Use spoiler marking for sensitive content
+- Combine local attachments with external URLs as needed
+
+### 5. File Components
+
+Display individual uploaded files within the message body.
+
+```javascript
+const { AttachmentBuilder, FileBuilder, MessageFlags } = require('discord.js');
+
+const file = new AttachmentBuilder('../assets/document.pdf');
+
+const exampleFile = new FileBuilder()
+    .setURL('attachment://document.pdf');
+
+await channel.send({
+    components: [exampleFile],
+    files: [file],
+    flags: MessageFlags.IsComponentsV2,
+});
+```
+
+**Notes**:
+- Cannot have alt text (unlike Thumbnail/Media Gallery)
+- Can be marked as spoiler
+- Use multiple File components for multiple files
+
+### 6. Separator Components
+
+Add vertical padding and optional visual division between components.
+
+```javascript
+const { TextDisplayBuilder, SeparatorBuilder, SeparatorSpacingSize, MessageFlags } = require('discord.js');
+
+const textDisplay = new TextDisplayBuilder()
+    .setContent('Content above separator');
+
+const separator = new SeparatorBuilder()
+    .setDivider(false) // No visual line
+    .setSpacing(SeparatorSpacingSize.Large);
+
+const textDisplay2 = new TextDisplayBuilder()
+    .setContent('Content below separator');
+
+await channel.send({
+    components: [textDisplay, separator, textDisplay2],
+    flags: MessageFlags.IsComponentsV2,
+});
+```
+
+**Options**:
+- Spacing: `SeparatorSpacingSize.Small` or `SeparatorSpacingSize.Large`
+- Visual divider: `true` (default) or `false`
+
+**⚠️ Warning**: Messages with only Separator components will have no visible content.
+
+### 7. Container Components
+
+Group child components in a visually distinct rounded box with optional accent color.
+
+```javascript
+const { ContainerBuilder, UserSelectMenuBuilder, ButtonStyle, MessageFlags } = require('discord.js');
+
+const exampleContainer = new ContainerBuilder()
+    .setAccentColor(0x0099FF)
+    .addTextDisplayComponents(
+        textDisplay => textDisplay
+            .setContent('Text inside container with **markdown**')
+    )
+    .addActionRowComponents(
+        actionRow => actionRow
+            .setComponents(
+                new UserSelectMenuBuilder()
+                    .setCustomId('userSelect')
+                    .setPlaceholder('Select users')
+            )
+    )
+    .addSeparatorComponents(
+        separator => separator
+    )
+    .addSectionComponents(
+        section => section
+            .addTextDisplayComponents(
+                textDisplay => textDisplay
+                    .setContent('Section text 1'),
+                textDisplay => textDisplay
+                    .setContent('Section text 2')
+            )
+            .setButtonAccessory(
+                button => button
+                    .setCustomId('containerButton')
+                    .setLabel('Section Button')
+                    .setStyle(ButtonStyle.Primary)
+            )
+    );
+
+await channel.send({
+    components: [exampleContainer],
+    flags: MessageFlags.IsComponentsV2,
+});
+```
+
+**Features**:
+- Accent color on the left border
+- No color = matches background color
+- Spoiler marking blurs entire container
+- Can contain any combination of display components
+
+## Common Patterns and Best Practices
 
 ### Error Handling
-Always wrap component interactions in try-catch blocks:
+
 ```javascript
 try {
-  const response = await interaction.channel.awaitMessageComponent({
-    filter: i => i.user.id === interaction.user.id && i.customId === 'your_id',
-    time: 60000,
-  });
-  // Handle response
-} catch (error) {
-  if (error.code === 'INTERACTION_COLLECTOR_ERROR') {
-    // Handle timeout
-    await interaction.editReply({ 
-      content: 'Interaction timed out.', 
-      components: [] 
+    await channel.send({
+        components: [myComponent],
+        flags: MessageFlags.IsComponentsV2,
     });
-  }
+} catch (error) {
+    if (error.code === 50035) {
+        console.error('Component validation failed:', error.message);
+    }
+    // Handle other Discord API errors
 }
 ```
 
-### Component Updates
-- Use `interaction.update()` to modify the current message
-- Use `interaction.followUp()` to send new messages
-- Use `interaction.editReply()` to edit your bot's reply
+### Component Composition
 
-### Message Flow
 ```javascript
-// Initial reply with V2 components
-await interaction.reply({
-  components: [textDisplay],
-  flags: MessageFlags.IsComponentsV2,
-  ephemeral: true
-});
+// Reusable component builder
+function createInfoSection(title, description, buttonLabel, buttonId) {
+    return new SectionBuilder()
+        .addTextDisplayComponents(
+            textDisplay => textDisplay.setContent(`**${title}**`),
+            textDisplay => textDisplay.setContent(description)
+        )
+        .setButtonAccessory(
+            button => button
+                .setCustomId(buttonId)
+                .setLabel(buttonLabel)
+                .setStyle(ButtonStyle.Secondary)
+        );
+}
 
-// Update the same message
-await componentInteraction.update({
-  components: [newTextDisplay],
-  flags: MessageFlags.IsComponentsV2,
-  ephemeral: true
+// Usage
+const infoSection = createInfoSection(
+    'Help Topic',
+    'This is helpful information about the topic.',
+    'Learn More',
+    'help_button'
+);
+```
+
+### File Attachment Management
+
+```javascript
+const { AttachmentBuilder } = require('discord.js');
+
+// Always reference attachments explicitly in components
+const imageFile = new AttachmentBuilder('./image.png');
+const docFile = new AttachmentBuilder('./document.pdf');
+
+const gallery = new MediaGalleryBuilder()
+    .addItems(
+        item => item
+            .setURL('attachment://image.png')
+            .setDescription('Image description')
+    );
+
+const fileComponent = new FileBuilder()
+    .setURL('attachment://document.pdf');
+
+await channel.send({
+    components: [gallery, fileComponent],
+    files: [imageFile, docFile],
+    flags: MessageFlags.IsComponentsV2,
 });
 ```
 
-## Database Integration
+### Migration from Embeds
 
-### Sequelize Model Example
 ```javascript
-const { DataTypes } = require('sequelize');
+// Old embed approach
+const embed = new EmbedBuilder()
+    .setTitle('Title')
+    .setDescription('Description')
+    .setThumbnail('https://example.com/image.png')
+    .addFields({ name: 'Field', value: 'Value' });
 
-const Player = sequelize.define('Player', {
-  discord_id: {
-    type: DataTypes.STRING,
-    unique: true,
-    allowNull: false
-  },
-  race: DataTypes.STRING,
-  origin: DataTypes.STRING,
-  dream: DataTypes.STRING,
-  stats: {
-    type: DataTypes.JSON,
-    defaultValue: { hp: 10, atk: 5, def: 5 }
-  }
+// New display components approach
+const container = new ContainerBuilder()
+    .setAccentColor(0x0099FF)
+    .addTextDisplayComponents(
+        textDisplay => textDisplay.setContent('**Title**\nDescription')
+    )
+    .addSectionComponents(
+        section => section
+            .addTextDisplayComponents(
+                textDisplay => textDisplay.setContent('**Field**\nValue')
+            )
+            .setThumbnailAccessory(
+                thumbnail => thumbnail
+                    .setURL('https://example.com/image.png')
+                    .setDescription('Thumbnail alt text')
+            )
+    );
+```
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Component limit exceeded**: Keep track of nested components (they count toward the 40 limit)
+2. **Text character limit**: Monitor total characters across all text components (4000 max)
+3. **File not referenced**: All attached files must be explicitly referenced in components
+4. **Missing MessageFlags.IsComponentsV2**: Required for all display component messages
+
+### Debugging Tips
+
+```javascript
+// Count total components recursively
+function countComponents(component) {
+    let count = 1;
+    if (component.components) {
+        count += component.components.reduce((sum, child) => 
+            sum + countComponents(child), 0);
+    }
+    return count;
+}
+
+// Count text characters
+function countTextCharacters(components) {
+    // Implement based on component types used
+    return totalCharacters;
+}
+```
+
+## Integration with Interaction Handlers
+
+```javascript
+// Handle button interactions from display components
+client.on('interactionCreate', async interaction => {
+    if (!interaction.isButton()) return;
+    
+    if (interaction.customId === 'exampleButton') {
+        await interaction.reply({
+            components: [
+                new TextDisplayBuilder()
+                    .setContent('Button was clicked!')
+            ],
+            flags: MessageFlags.IsComponentsV2,
+            ephemeral: true
+        });
+    }
 });
 ```
 
-### Common Patterns
-1. **Check existing records** before creating
-2. **Use transactions** for complex operations
-3. **Handle unique constraint violations**
-4. **Store JSON data** for flexible stats/inventory
-
-## Security & Validation
-
-### User Input Validation
-- Always validate select menu values against allowed options
-- Sanitize user inputs before database storage
-- Use ephemeral messages for character creation/sensitive data
-- Implement proper permission checks
-
-### Rate Limiting
-- Use collectors with timeouts (60000ms recommended)
-- Implement cooldowns for expensive operations
-- Cache frequently accessed data
-
-## Common Issues & Solutions
-
-### Component Type Errors
-- **Error**: `Value of field "type" must be one of (1,)`
-- **Cause**: Using invalid component types or missing V2 flag
-- **Solution**: Use proper builders and `MessageFlags.IsComponentsV2`
-
-### Missing Components Flag
-- **Error**: Components not displaying correctly
-- **Solution**: Always include `flags: MessageFlags.IsComponentsV2` for display components
-
-### Interaction Timeout
-- **Error**: `INTERACTION_COLLECTOR_ERROR`
-- **Solution**: Implement proper timeout handling and user feedback
+This guide provides comprehensive coverage of Discord's Display Components system. Always refer to the latest Discord.js documentation for updates and additional features.
 
 ---
-### Benefits of V2:
-
-- **No content conflicts**: You can't accidentally mix content and components
-- **Richer formatting**: Full markdown support in text displays
-- **Visual consistency**: All messages use the same styled container system
-- **Better UX**: Clear visual separation between steps
-- **Professional appearance**: Looks more polished than basic text + components
 
 ### Things to Note:
 
