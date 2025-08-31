@@ -2,7 +2,8 @@ const { Client, Collection, GatewayIntentBits } = require('discord.js');
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
-const { sequelize } = require('./database');
+const { sequelize, Player } = require('./database');
+const questManager = require('./src/quests/QuestManager');
 
 const client = new Client({
   intents: [
@@ -41,14 +42,71 @@ if (fs.existsSync(commandsPath)) {
 }
 
 client.on('interactionCreate', async interaction => {
-  if (!interaction.isChatInputCommand()) return;
-  const command = client.commands.get(interaction.commandName);
-  if (!command) return;
   try {
-    await command.execute(interaction);
+    // Slash commands
+    if (interaction.isChatInputCommand && interaction.isChatInputCommand()) {
+      const command = client.commands.get(interaction.commandName);
+      if (!command) return;
+      try {
+        await command.execute(interaction);
+      } catch (error) {
+        console.error(error);
+        if (!interaction.replied && !interaction.deferred) {
+          await interaction.reply({ content: 'There was an error executing that command!', ephemeral: true });
+        }
+      }
+      return;
+    }
+
+    // Component interactions (buttons / select menus) -> route to active quest if any
+    if ((interaction.isButton && interaction.isButton()) || (interaction.isStringSelectMenu && interaction.isStringSelectMenu())) {
+      // Try to load player record by Discord ID
+      let player = null;
+      try {
+        if (Player && typeof Player.findOne === 'function') {
+          player = await Player.findOne({ where: { discordId: interaction.user.id } });
+        }
+      } catch (e) {
+        console.error('Failed to load player for interaction:', e);
+      }
+
+      if (!player) {
+        // No DB-backed player found; inform user how to start a quest (ephemeral reply)
+        try {
+          if (!interaction.replied && !interaction.deferred) {
+            await interaction.reply({ content: 'No player profile found. Use the quest commands to start (e.g. /quest accept).', ephemeral: true });
+          } else if (interaction.deferred) {
+            await interaction.editReply({ content: 'No player profile found. Use the quest commands to start (e.g. /quest accept).' });
+          }
+        } catch (e) { console.error(e); }
+        return;
+      }
+
+      // Restore current quest instance for player and forward the interaction
+      try {
+        const quest = questManager.getCurrentQuest(player);
+        if (!quest) {
+          if (!interaction.replied && !interaction.deferred) {
+            await interaction.reply({ content: 'You are not currently on a quest.', ephemeral: true });
+          } else if (interaction.deferred) {
+            await interaction.editReply({ content: 'You are not currently on a quest.' });
+          }
+          return;
+        }
+
+        await quest.handleInteraction(interaction);
+        } catch (e) {
+        console.error('Error routing component interaction to quest:', e);
+        if (!interaction.replied && !interaction.deferred) {
+          await interaction.reply({ content: 'There was an error handling that interaction.', ephemeral: true });
+        } else if (interaction.deferred) {
+          try { await interaction.editReply({ content: 'There was an error handling that interaction.' }); } catch (err) { console.error(err); }
+        }
+      }
+    }
   } catch (error) {
-    console.error(error);
-    await interaction.reply({ content: 'There was an error executing that command!', ephemeral: true });
+    console.error('Unexpected error in interactionCreate handler:', error);
+    try { if (!interaction.replied && !interaction.deferred) await interaction.reply({ content: 'An unexpected error occurred.', ephemeral: true }); } catch (e) {}
   }
 });
 
