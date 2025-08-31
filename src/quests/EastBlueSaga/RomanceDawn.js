@@ -254,7 +254,9 @@ class RomanceDawn extends BaseQuest {
                 break;
 
             case 'fight_morgan':
+                console.info(`RomanceDawn: fight_morgan interaction for player=${this.player?.discordId || this.player?.id || 'unknown'}`);
                 const victory = morganFightMiniGame(this.player);
+                console.info(`RomanceDawn: fight_morgan result=${victory}`);
                 if (victory) {
                     this.currentStep++;
                     if (this.player) {
@@ -266,6 +268,11 @@ class RomanceDawn extends BaseQuest {
                         components: []
                     });
                 } else {
+                    // Persist current state so the "Try Again" button routes back to the correct quest instance
+                    if (this.player) {
+                        this.player.activeQuestInstance = { state: this.state, currentStep: this.currentStep, custom: this.custom };
+                        try { if (typeof this.player.save === 'function') await this.player.save(); } catch (e) { console.error('Failed to save player after Morgan defeat', e); }
+                    }
                     await interaction.update({
                         content: "You were defeated by Morgan. Try again!",
                         components: [
