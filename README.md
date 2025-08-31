@@ -37,3 +37,13 @@ Testing
 ```powershell
 npm test
 ```
+
+CI / Migrations
+
+If your CI runs migrations as part of the build, use the provided script which installs dev dependencies first and runs migrations:
+
+```powershell
+npm run ci:migrate
+```
+
+This ensures `sequelize-cli` (a devDependency) is available during the migration step and uses the `DATABASE_URL` env var for configuration.
