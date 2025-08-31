@@ -1,6 +1,6 @@
 const { SlashCommandBuilder } = require('discord.js');
 const questManager = require('../quests/QuestManager');
-const { Player } = require('../database/models/player'); 
+const { Player } = require('../database/models'); 
 
 module.exports = {
     data: new SlashCommandBuilder()
