@@ -9,6 +9,13 @@ All notable changes to this project will be documented in this file. This projec
 - QuestManager uses quest class `fromJSON` when present and restores instances atomically.
 - Wrapped quest completion (apply rewards + clear quest) inside a DB transaction.
 - Defensive RewardHandler and tests for quest flows and instance restore.
+ - Route component interactions (buttons/selects) to active quest instances via `index.js`.
+ - Added ephemeral replies and editReply fallbacks for component interactions when player or quest not found.
+ - Implemented transient retry tokens for button flows to avoid DB race windows (`src/utils/tokenStore.js`).
+ - Add retry limits and token rotation for the `fight_morgan` mini-game to prevent infinite retries.
+ - Added file logging for interactions (`logs/interactions.log`) via `src/utils/fileLogger.js`.
+ - Added `quest-debug` slash command for developers to dump a player's quest payload (ephemeral).
+ - Improved diagnostic logs when component interactions arrive to help debug stuck buttons.
 
 ## [1.0.0] - 2025-09-01
 
