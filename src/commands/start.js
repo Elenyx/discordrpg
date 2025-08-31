@@ -1,15 +1,4 @@
-const { SlashCommandBuilder, MessageFlags } = require('discord.js');
-const { 
-  TextDisplayBuilder, 
-  SectionBuilder, 
-  ContainerBuilder,
-  SeparatorBuilder,
-  ActionRowBuilder,
-  StringSelectMenuBuilder,
-  ButtonBuilder,
-  ButtonStyle 
-} = require('discord.js');
-
+const { SlashCommandBuilder, MessageFlags, ComponentType } = require('discord.js');
 const { Player } = require('../../database');
 
 const races = [
@@ -36,43 +25,74 @@ const dreams = [
   { label: 'Be Strongest', value: 'Strongest', description: 'Become the world\'s strongest fighter' },
 ];
 
+// Helper function to build Components V2 container with text and select menu
 function buildStepContainer(step, title, description, selectId, options) {
-  const textDisplay = new TextDisplayBuilder()
-    .setContent(`**Step ${step}: ${title}**\n${description}`);
-  
-  const selectMenu = new StringSelectMenuBuilder()
-    .setCustomId(selectId)
-    .setPlaceholder(`Choose your ${title.toLowerCase()}`)
-    .addOptions(options);
-  
-  const actionRow = new ActionRowBuilder()
-    .addComponents(selectMenu);
-  
-  return new ContainerBuilder()
-    .setAccentColor(0x3498db)
-    .addComponents(textDisplay, actionRow);
+  return {
+    type: 10, // Container type for V2
+    accent_color: 0x3498db,
+    components: [
+      {
+        type: 11, // Text Display type for V2
+        content: `**Step ${step}: ${title}**\n${description}`
+      },
+      {
+        type: 1, // Action Row
+        components: [
+          {
+            type: 3, // String Select Menu
+            custom_id: selectId,
+            placeholder: `Choose your ${title.toLowerCase()}`,
+            options: options
+          }
+        ]
+      }
+    ]
+  };
 }
 
+// Helper function to build summary container with buttons
 function buildSummaryContainer(race, origin, dream) {
-  const summaryText = new TextDisplayBuilder()
-    .setContent(`**🏴‍☠️ Character Summary**\n**Race:** ${race}\n**Origin:** ${origin}\n**Dream:** ${dream}\n\nReady to begin your adventure?`);
-  
-  const confirmButton = new ButtonBuilder()
-    .setCustomId('confirm_start')
-    .setLabel('⚓ Set Sail!')
-    .setStyle(ButtonStyle.Success);
-  
-  const cancelButton = new ButtonBuilder()
-    .setCustomId('cancel_start')
-    .setLabel('❌ Cancel')
-    .setStyle(ButtonStyle.Danger);
-  
-  const buttonRow = new ActionRowBuilder()
-    .addComponents(confirmButton, cancelButton);
-  
-  return new ContainerBuilder()
-    .setAccentColor(0x27ae60)
-    .addComponents(summaryText, buttonRow);
+  return {
+    type: 10, // Container type for V2
+    accent_color: 0x27ae60,
+    components: [
+      {
+        type: 11, // Text Display type for V2
+        content: `**🏴‍☠️ Character Summary**\n**Race:** ${race}\n**Origin:** ${origin}\n**Dream:** ${dream}\n\nReady to begin your adventure?`
+      },
+      {
+        type: 1, // Action Row
+        components: [
+          {
+            type: 2, // Button
+            custom_id: 'confirm_start',
+            label: '⚓ Set Sail!',
+            style: 3 // Success style
+          },
+          {
+            type: 2, // Button
+            custom_id: 'cancel_start',
+            label: '❌ Cancel',
+            style: 4 // Danger style
+          }
+        ]
+      }
+    ]
+  };
+}
+
+// Helper function to build simple text display container
+function buildTextContainer(content, accentColor = 0x3498db) {
+  return {
+    type: 10, // Container type for V2
+    accent_color: accentColor,
+    components: [
+      {
+        type: 11, // Text Display type for V2
+        content: content
+      }
+    ]
+  };
 }
 
 module.exports = {
@@ -89,7 +109,7 @@ module.exports = {
       if (existing) {
         return interaction.reply({ 
           content: 'You already have a character! Use `/profile` to view your stats.', 
-          ephemeral: true 
+          flags: MessageFlags.Ephemeral
         });
       }
 
@@ -104,8 +124,7 @@ module.exports = {
 
       await interaction.reply({
         components: [raceContainer],
-        flags: MessageFlags.IsComponentsV2,
-        ephemeral: true,
+        flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral
       });
 
       const raceSelect = await interaction.channel.awaitMessageComponent({
@@ -125,7 +144,7 @@ module.exports = {
 
       await raceSelect.update({
         components: [originContainer],
-        flags: MessageFlags.IsComponentsV2,
+        flags: MessageFlags.IsComponentsV2
       });
 
       const originSelect = await interaction.channel.awaitMessageComponent({
@@ -145,7 +164,7 @@ module.exports = {
 
       await originSelect.update({
         components: [dreamContainer],
-        flags: MessageFlags.IsComponentsV2,
+        flags: MessageFlags.IsComponentsV2
       });
 
       const dreamSelect = await interaction.channel.awaitMessageComponent({
@@ -159,7 +178,7 @@ module.exports = {
 
       await dreamSelect.update({
         components: [summaryContainer],
-        flags: MessageFlags.IsComponentsV2,
+        flags: MessageFlags.IsComponentsV2
       });
 
       const confirm = await interaction.channel.awaitMessageComponent({
@@ -168,12 +187,14 @@ module.exports = {
       });
 
       if (confirm.customId === 'cancel_start') {
-        const cancelText = new TextDisplayBuilder()
-          .setContent('⛵ **Character creation cancelled.**\nYou can start again anytime with `/start`!');
+        const cancelContainer = buildTextContainer(
+          '⛵ **Character creation cancelled.**\nYou can start again anytime with `/start`!',
+          0x95a5a6
+        );
         
         await confirm.update({
-          components: [cancelText],
-          flags: MessageFlags.IsComponentsV2,
+          components: [cancelContainer],
+          flags: MessageFlags.IsComponentsV2
         });
         return;
       }
@@ -189,42 +210,30 @@ module.exports = {
       });
 
       // Success message
-      const successText = new TextDisplayBuilder()
-        .setContent(`🎉 **Welcome to the Grand Line, pirate!**\n\n**${race}** from **${origin}** with the dream to **${dream}**!\n\nYour adventure begins now! Use \`/profile\` to view your character stats and \`/quest\` to start your first mission.`);
-      
-      const successContainer = new ContainerBuilder()
-        .setAccentColor(0xf1c40f)
-        .addComponents(successText);
+      const successContainer = buildTextContainer(
+        `🎉 **Welcome to the Grand Line, pirate!**\n\n**${race}** from **${origin}** with the dream to **${dream}**!\n\nYour adventure begins now! Use \`/profile\` to view your character stats and \`/quest\` to start your first mission.`,
+        0xf1c40f
+      );
 
       await confirm.update({
         components: [successContainer],
-        flags: MessageFlags.IsComponentsV2,
+        flags: MessageFlags.IsComponentsV2
       });
 
     } catch (error) {
       console.error('Error in start command:', error);
       
-      const errorText = new TextDisplayBuilder()
-        .setContent('⚠️ **An error occurred during character creation.**\nPlease try again with `/start`.');
-      
-      const errorContainer = new ContainerBuilder()
-        .setAccentColor(0xe74c3c)
-        .addComponents(errorText);
-
       // Handle different error scenarios
       if (error.code === 'INTERACTION_COLLECTOR_ERROR') {
-        const timeoutText = new TextDisplayBuilder()
-          .setContent('⏰ **Character creation timed out.**\nPlease try again with `/start` when you\'re ready.');
-        
-        const timeoutContainer = new ContainerBuilder()
-          .setAccentColor(0x95a5a6)
-          .addComponents(timeoutText);
+        const timeoutContainer = buildTextContainer(
+          '⏰ **Character creation timed out.**\nPlease try again with `/start` when you\'re ready.',
+          0x95a5a6
+        );
 
         if (!interaction.replied && !interaction.deferred) {
           await interaction.reply({ 
             components: [timeoutContainer],
-            flags: MessageFlags.IsComponentsV2,
-            ephemeral: true 
+            flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral
           });
         } else {
           await interaction.editReply({ 
@@ -234,11 +243,15 @@ module.exports = {
         }
       } else {
         // General error handling
+        const errorContainer = buildTextContainer(
+          '⚠️ **An error occurred during character creation.**\nPlease try again with `/start`.',
+          0xe74c3c
+        );
+        
         if (!interaction.replied && !interaction.deferred) {
           await interaction.reply({ 
             components: [errorContainer],
-            flags: MessageFlags.IsComponentsV2,
-            ephemeral: true 
+            flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral
           });
         } else {
           await interaction.editReply({ 
