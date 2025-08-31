@@ -35,7 +35,7 @@ const dreams = [
   { label: 'Be Strongest', value: 'Strongest', description: 'Become the world\'s strongest fighter' },
 ];
 
-// Corrected Helper function to build Components V2 container with text and select menu
+// Helper function to build Components V2 container with text and select menu
 function buildStepContainer(step, title, description, selectId, options) {
   const textDisplay = new TextDisplayBuilder()
     .setContent(`**Step ${step}: ${title}**\n${description}`);
@@ -48,18 +48,15 @@ function buildStepContainer(step, title, description, selectId, options) {
   // ActionRow holds the interactive component (Select Menu)
   const actionRow = new ActionRowBuilder().addComponents(selectMenu);
 
-  const section = new SectionBuilder()
-    .addTextDisplayComponents(textDisplay);
-
   const container = new ContainerBuilder()
     .setAccentColor(0x3498db)
-    .addSectionComponents(section)      // Use the specific method for sections
-    .addActionRowComponents(actionRow); // Use the specific method for action rows
+    .addTextDisplayComponents(textDisplay)    // Add text display directly to container
+    .addActionRowComponents(actionRow);       // Add action row directly to container
 
   return container;
 }
 
-// Corrected Helper function to build summary container with multiple buttons
+// Helper function to build summary container with multiple buttons
 function buildSummaryContainer(race, origin, dream) {
   const textDisplay = new TextDisplayBuilder()
     .setContent(`**🏴‍☠️ Character Summary**\n**Race:** ${race}\n**Origin:** ${origin}\n**Dream:** ${dream}\n\nReady to begin your adventure?`);
@@ -77,25 +74,21 @@ function buildSummaryContainer(race, origin, dream) {
   // ActionRow holds the interactive components (Buttons)
   const actionRow = new ActionRowBuilder().addComponents(confirmButton, cancelButton);
 
-  const section = new SectionBuilder()
-    .addTextDisplayComponents(textDisplay);
-
   const container = new ContainerBuilder()
     .setAccentColor(0x27ae60)
-    .addSectionComponents(section)
-    .addActionRowComponents(actionRow);
+    .addTextDisplayComponents(textDisplay)   // Add text display directly to container
+    .addActionRowComponents(actionRow);      // Add action row directly to container
 
   return container;
 }
 
-// Corrected Helper function to build a simple text display container
+// Helper function to build a simple text display container
 function buildTextContainer(content, accentColor = 0x3498db) {
   const textDisplay = new TextDisplayBuilder().setContent(content);
-  const section = new SectionBuilder().addTextDisplayComponents(textDisplay);
 
   const container = new ContainerBuilder()
     .setAccentColor(accentColor)
-    .addSectionComponents(section); // Use the correct specific method
+    .addTextDisplayComponents(textDisplay);  // Add text display directly to container
 
   return container;
 }
