@@ -1,8 +1,10 @@
 
+
 const { Client, Collection, GatewayIntentBits } = require('discord.js');
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
+const { sequelize } = require('./database');
 
 const client = new Client({
   intents: [
@@ -19,7 +21,7 @@ if (fs.existsSync(eventsPath)) {
   for (const file of eventFiles) {
     const event = require(path.join(eventsPath, file));
     if (file === 'ready.js') {
-      client.once('ready', () => event(client));
+      client.once('clientReady', () => event(client));
     }
     // Add more event types as needed
   }
@@ -50,4 +52,14 @@ client.on('interactionCreate', async interaction => {
   }
 });
 
-client.login(process.env.BOT_TOKEN);
+
+// Sync DB and then login
+sequelize.sync()
+  .then(() => {
+    console.log('Database synced.');
+    client.login(process.env.BOT_TOKEN);
+  })
+  .catch(err => {
+    console.error('Failed to sync database:', err);
+    process.exit(1);
+  });
