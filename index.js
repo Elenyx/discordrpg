@@ -60,6 +60,9 @@ client.on('interactionCreate', async interaction => {
 
     // Component interactions (buttons / select menus) -> route to active quest if any
     if ((interaction.isButton && interaction.isButton()) || (interaction.isStringSelectMenu && interaction.isStringSelectMenu())) {
+      // Diagnostic info for debugging stuck interactions
+      const incomingCustomId = interaction.customId || (interaction.values && interaction.values[0]) || null;
+      console.info(`Component interaction received: user=${interaction.user.id} customId=${incomingCustomId} guild=${interaction.guildId} channel=${interaction.channelId} message=${interaction.message?.id}`);
       // Try to load player record by Discord ID
       let player = null;
       try {
@@ -71,7 +74,16 @@ client.on('interactionCreate', async interaction => {
       }
 
       if (!player) {
-        // No DB-backed player found; inform user how to start a quest (ephemeral reply)
+        // No DB-backed player found; log details to help diagnose why
+        console.warn('No player record found for interaction', {
+          discordId: interaction.user.id,
+          customId: incomingCustomId,
+          guildId: interaction.guildId,
+          channelId: interaction.channelId,
+          messageId: interaction.message?.id,
+        });
+
+        // Inform user how to start a quest (ephemeral reply)
         try {
           if (!interaction.replied && !interaction.deferred) {
             await interaction.reply({ content: 'No player profile found. Use the quest commands to start (e.g. /quest accept).', ephemeral: true });
@@ -86,6 +98,14 @@ client.on('interactionCreate', async interaction => {
       try {
         const quest = questManager.getCurrentQuest(player);
         if (!quest) {
+          console.warn('Player has no active quest for component interaction', {
+            discordId: interaction.user.id,
+            activeQuestField: player.activeQuest || null,
+            customId: incomingCustomId,
+            guildId: interaction.guildId,
+            channelId: interaction.channelId,
+          });
+
           if (!interaction.replied && !interaction.deferred) {
             await interaction.reply({ content: 'You are not currently on a quest.', ephemeral: true });
           } else if (interaction.deferred) {
