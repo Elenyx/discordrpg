@@ -1,5 +1,4 @@
 const { SlashCommandBuilder } = require('discord.js');
-const { Player } = require('../../database');
 
 // V2 component helpers
 function buildSectionWithSelect({ title, description, selectId, options, step }) {
