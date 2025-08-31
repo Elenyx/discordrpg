@@ -6,7 +6,8 @@ const {
   TextDisplayBuilder,
   SectionBuilder,
   ContainerBuilder,
-  ButtonBuilder
+  ButtonBuilder,
+  ActionRowBuilder, // Correctly import ActionRowBuilder
 } = require('discord.js');
 const { Player } = require('../../database');
 
@@ -34,53 +35,68 @@ const dreams = [
   { label: 'Be Strongest', value: 'Strongest', description: 'Become the world\'s strongest fighter' },
 ];
 
-
-// Helper function to build Components V2 container with text and select menu using builders
+// Corrected Helper function to build Components V2 container with text and select menu
 function buildStepContainer(step, title, description, selectId, options) {
   const textDisplay = new TextDisplayBuilder()
     .setContent(`**Step ${step}: ${title}**\n${description}`);
+
   const selectMenu = new StringSelectMenuBuilder()
     .setCustomId(selectId)
     .setPlaceholder(`Choose your ${title.toLowerCase()}`)
     .addOptions(options);
+
+  // ActionRow holds the interactive component (Select Menu)
+  const actionRow = new ActionRowBuilder().addComponents(selectMenu);
+
   const section = new SectionBuilder()
-    .addTextDisplayComponents(textDisplay)
-    .setSelectMenuAccessory(selectMenu);
+    .addTextDisplayComponents(textDisplay);
+
   const container = new ContainerBuilder()
     .setAccentColor(0x3498db)
-    .addComponents(section);
+    .addSectionComponents(section)      // Use the specific method for sections
+    .addActionRowComponents(actionRow); // Use the specific method for action rows
+
   return container;
 }
 
-// Helper function to build summary container with buttons using builders
+// Corrected Helper function to build summary container with multiple buttons
 function buildSummaryContainer(race, origin, dream) {
   const textDisplay = new TextDisplayBuilder()
     .setContent(`**🏴‍☠️ Character Summary**\n**Race:** ${race}\n**Origin:** ${origin}\n**Dream:** ${dream}\n\nReady to begin your adventure?`);
+
   const confirmButton = new ButtonBuilder()
     .setCustomId('confirm_start')
     .setLabel('⚓ Set Sail!')
     .setStyle(ButtonStyle.Success);
+
   const cancelButton = new ButtonBuilder()
     .setCustomId('cancel_start')
     .setLabel('❌ Cancel')
     .setStyle(ButtonStyle.Danger);
+
+  // ActionRow holds the interactive components (Buttons)
+  const actionRow = new ActionRowBuilder().addComponents(confirmButton, cancelButton);
+
   const section = new SectionBuilder()
-    .addTextDisplayComponents(textDisplay)
-    .setButtonAccessory(confirmButton)
-    .addButtonAccessory(cancelButton);
+    .addTextDisplayComponents(textDisplay);
+
   const container = new ContainerBuilder()
     .setAccentColor(0x27ae60)
-    .addComponents(section);
+    .addSectionComponents(section)
+    .addActionRowComponents(actionRow);
+
   return container;
 }
 
-// Helper function to build simple text display container using builders
+// Corrected Helper function to build a simple text display container
 function buildTextContainer(content, accentColor = 0x3498db) {
   const textDisplay = new TextDisplayBuilder().setContent(content);
   const section = new SectionBuilder().addTextDisplayComponents(textDisplay);
+
   const container = new ContainerBuilder()
     .setAccentColor(accentColor)
-    .addComponents(section);
+    .addSectionComponents(section); // Use the correct specific method
+
   return container;
 }
 
@@ -88,20 +104,24 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('start')
     .setDescription('Begin your One Piece adventure!'),
-  
+
   async execute(interaction) {
     const discordId = interaction.user.id;
-    
+
     try {
       // Check if player already exists
       const existing = await Player.findOne({ where: { discord_id: discordId } });
       if (existing) {
-        return interaction.reply({ 
-          content: 'You already have a character! Use `/profile` to view your stats.', 
-          flags: MessageFlags.Ephemeral
+        // Using a V2 component for the reply to maintain consistency
+        const alreadyExistsContainer = buildTextContainer(
+          'You already have a character! Use `/profile` to view your stats.',
+          0xe74c3c // Red color for error/warning
+        );
+        return interaction.reply({
+          components: [alreadyExistsContainer],
+          flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral
         });
       }
-
 
       // Step 1: Race selection
       const raceContainer = buildStepContainer(
@@ -211,42 +231,32 @@ module.exports = {
 
     } catch (error) {
       console.error('Error in start command:', error);
-      
-      // Handle different error scenarios
-      if (error.code === 'INTERACTION_COLLECTOR_ERROR') {
+
+      if (error.code === 'InteractionCollectorError') {
         const timeoutContainer = buildTextContainer(
           '⏰ **Character creation timed out.**\nPlease try again with `/start` when you\'re ready.',
           0x95a5a6
         );
-
-        if (!interaction.replied && !interaction.deferred) {
-          await interaction.reply({ 
-            components: [timeoutContainer],
-            flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral
-          });
-        } else {
-          await interaction.editReply({ 
-            components: [timeoutContainer],
-            flags: MessageFlags.IsComponentsV2
-          });
-        }
+        await interaction.editReply({
+          components: [timeoutContainer],
+          flags: MessageFlags.IsComponentsV2
+        });
       } else {
-        // General error handling
         const errorContainer = buildTextContainer(
           '⚠️ **An error occurred during character creation.**\nPlease try again with `/start`.',
           0xe74c3c
         );
-        
-        if (!interaction.replied && !interaction.deferred) {
-          await interaction.reply({ 
-            components: [errorContainer],
-            flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral
-          });
+        // Use editReply if an interaction has already been replied to, otherwise reply.
+        if (interaction.replied || interaction.deferred) {
+            await interaction.editReply({
+                components: [errorContainer],
+                flags: MessageFlags.IsComponentsV2
+            });
         } else {
-          await interaction.editReply({ 
-            components: [errorContainer],
-            flags: MessageFlags.IsComponentsV2
-          });
+            await interaction.reply({
+                components: [errorContainer],
+                flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral
+            });
         }
       }
     }
