@@ -1,5 +1,5 @@
 // RomanceDawn.js
-const BaseQuest = require('./BaseQuest');
+const BaseQuest = require('../BaseQuest');
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder } = require('discord.js');
 const raceSteps = require('./RaceSpecificSteps');
 const { morganFightMiniGame } = require('../utils/MiniGames');
