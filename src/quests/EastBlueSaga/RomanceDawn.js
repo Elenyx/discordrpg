@@ -5,12 +5,39 @@ const raceSteps = require('./RaceSpecificSteps');
 const { morganFightMiniGame } = require('../utils/MiniGames');
 
 class RomanceDawn extends BaseQuest {
+    // static identifier used by the QuestManager registration
+    static id = 'romance_dawn';
+    // version the serialized format
+    static serializedVersion = 1;
     constructor(player) {
-        super(player);
-        this.id = 'romance_dawn';
-        this.name = 'Romance Dawn';
-        this.description = 'Begin your adventure in the East Blue and meet your first crewmates';
-        this.steps = this.generateSteps();
+    // BaseQuest expects an object for id/title/description; pass minimal info
+    super({ id: 'romance_dawn', title: 'Romance Dawn', description: 'Begin your adventure in the East Blue and meet your first crewmates' });
+    // store the player for quest logic
+    this.player = player;
+
+    this.id = 'romance_dawn';
+    this.name = 'Romance Dawn';
+    this.description = 'Begin your adventure in the East Blue and meet your first crewmates';
+    this.steps = this.generateSteps();
+    }
+
+    toJSON() {
+        return {
+            id: this.id,
+            state: this.state,
+            currentStep: this.currentStep,
+            version: RomanceDawn.serializedVersion,
+            custom: this.custom || null,
+        };
+    }
+
+    static fromJSON(data, player) {
+        const inst = new RomanceDawn(player);
+        inst.state = data.state || inst.state;
+        inst.currentStep = data.currentStep || inst.currentStep || 0;
+        inst.version = data.version || RomanceDawn.serializedVersion;
+        inst.custom = data.custom || inst.custom || null;
+        return inst;
     }
 
     generateSteps() {
@@ -130,6 +157,15 @@ class RomanceDawn extends BaseQuest {
         };
     }
 
+    // Compute rewards for completing the quest
+    calculateRewards() {
+        return {
+            berries: 100,
+            exp: 50,
+            items: ['Straw Hat']
+        };
+    }
+
     async progress() {
         if (this.state !== 'in-progress') {
             throw new Error('Quest is not in progress');
@@ -179,6 +215,11 @@ class RomanceDawn extends BaseQuest {
         switch(customId) {
             case 'investigate_barrel':
                 this.currentStep++;
+                // persist any runtime custom data if present
+                if (this.player) {
+                    this.player.activeQuestInstance = { state: this.state, currentStep: this.currentStep, custom: this.custom };
+                    try { if (typeof this.player.save === 'function') await this.player.save(); } catch (e) {}
+                }
                 await interaction.update(await this.progress());
                 break;
 
@@ -193,6 +234,10 @@ class RomanceDawn extends BaseQuest {
             case 'free_zoro':
                 if (interaction.values[0] === 'free_yes') {
                     this.currentStep++;
+                    if (this.player) {
+                        this.player.activeQuestInstance = { state: this.state, currentStep: this.currentStep, custom: this.custom };
+                        try { if (typeof this.player.save === 'function') await this.player.save(); } catch (e) {}
+                    }
                     await interaction.update(await this.progress());
                 } else {
                     await interaction.update({
@@ -200,6 +245,10 @@ class RomanceDawn extends BaseQuest {
                         components: []
                     });
                     this.currentStep += 2;
+                    if (this.player) {
+                        this.player.activeQuestInstance = { state: this.state, currentStep: this.currentStep, custom: this.custom };
+                        try { if (typeof this.player.save === 'function') await this.player.save(); } catch (e) {}
+                    }
                     await this.progress();
                 }
                 break;
@@ -208,6 +257,10 @@ class RomanceDawn extends BaseQuest {
                 const victory = morganFightMiniGame(this.player);
                 if (victory) {
                     this.currentStep++;
+                    if (this.player) {
+                        this.player.activeQuestInstance = { state: this.state, currentStep: this.currentStep, custom: this.custom };
+                        try { if (typeof this.player.save === 'function') await this.player.save(); } catch (e) {}
+                    }
                     await interaction.update({
                         content: "You defeated Captain Morgan! Zoro is now free and joins your crew!",
                         components: []
@@ -229,6 +282,10 @@ class RomanceDawn extends BaseQuest {
 
             default:
                 this.currentStep++;
+                if (this.player) {
+                    this.player.activeQuestInstance = { state: this.state, currentStep: this.currentStep, custom: this.custom };
+                    try { if (typeof this.player.save === 'function') await this.player.save(); } catch (e) {}
+                }
                 await interaction.update(await this.progress());
         }
     }

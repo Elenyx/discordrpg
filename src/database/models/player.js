@@ -34,6 +34,21 @@ module.exports = (sequelize) => {
       type: DataTypes.STRING,
       allowNull: true,
     },
+    activeQuest: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      field: 'active_quest',
+    },
+    activeQuestData: {
+      type: DataTypes.JSONB,
+      allowNull: true,
+      field: 'active_quest_data',
+    },
+    activeQuestInstance: {
+      type: DataTypes.JSONB,
+      allowNull: true,
+      field: 'active_quest_instance',
+    },
   }, {
     tableName: 'players',
     timestamps: true,
