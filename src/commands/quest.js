@@ -1,6 +1,6 @@
 const { SlashCommandBuilder } = require('discord.js');
 const questManager = require('../quests/QuestManager');
-const { Player } = require('../models'); // Adjust the path according to your project structure
+const { Player } = require('../database'); // Adjust the path according to your project structure
 
 module.exports = {
     data: new SlashCommandBuilder()
