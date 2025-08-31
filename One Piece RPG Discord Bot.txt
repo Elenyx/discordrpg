@@ -1,0 +1,1349 @@
+# 🌊 **One Piece RPG Discord Bot**
+
+> A living roleplay & adventure system where players create their own pirate, marine, revolutionary, or wanderer and carve out a destiny across the seas.
+
+---
+
+## 1. **The "Choose Your Destiny" Character System**
+
+This is the player’s **foundation**—their race, origin, faction, and dream all shape their journey and open different mechanics, abilities, and storylines.
+
+---
+
+### **A. Race Selection**
+
+Each race grants **unique stats, passives, and commands**, making them feel distinct in both roleplay and combat.
+
+* **Human – The Adaptable Majority**
+
+  * **Stats:** +1 to all (Strength, Agility, Durability, Intelligence)
+  * **Ability – `Adaptability`:** +10% more EXP from all sources.
+  * **Extra:** Flexible storylines, can join any faction without penalties.
+
+* **Fish-Man / Mermaid – Lords of the Sea**
+
+  * **Stats:** +2 Strength, +1 Durability
+  * **Ability – `Water Breathing`:** No underwater penalties, unique `/fishman.karate` command.
+  * **Extra:** Easier access to rare underwater quests & treasures.
+
+* **Mink – Lightning Furies**
+
+  * **Stats:** +2 Agility, +1 Strength
+  * **Ability – `Electro`:** Basic lightning attack with stun chance.
+  * **Event Form – `Sulong`:** Unlocks during “Full Moon” server events, massive buff.
+  * **Extra:** Unique quests tied to Zou and the Mink Tribe’s honor code.
+
+* **Skypiean – Children of the Clouds**
+
+  * **Stats:** +2 Intelligence, +1 Agility
+  * **Ability – `Sky-Dweller`:** Reduced fall damage, starts with a Dial (Impact/Wind).
+  * **Extra:** Easier navigation to Sky Islands and Dial-based crafting system.
+
+* **Giant – Titans of the Seas**
+
+  * **Stats:** +4 Strength, +2 Durability, -2 Agility
+  * **Ability – `Giant’s Strength`:** Wield oversized weapons, resistant to knockback.
+  * **Extra:** Giants can’t stealth or hide, but can crush groups in combat.
+
+* **Cyborg (Optional Unlock via Storyline)**
+
+  * **Stats:** +3 Durability, +2 Strength
+  * **Ability – `Mechanical Upgrade`:** Access to custom modules (rocket boosters, laser cannons).
+  * **Extra:** Repair system instead of natural healing.
+
+---
+
+### **B. Origin & Faction**
+
+The **island of origin** sets your **starting questline** and **default alignment**. Later, players can betray or switch allegiances, but beginnings shape the first impression.
+
+| Origin Island                | Default Faction                                   | Opening Story Arc                                                                                                                                 |
+| ---------------------------- | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Shells Town**              | **Marine Recruit**                                | *“The Tyrant’s Fall”* – Join the Marines under Captain Morgan, uncover corruption, and decide whether to remain a loyal soldier or desert.        |
+| **Syrup Village**            | **Pirate Hopeful**                                | *“The Liar’s Legacy”* – Inspired by Usopp’s tales, defend the village from pirates while seeking a ship and crew of your own.                     |
+| **Ohara (Post-Buster Call)** | **Revolutionary Seed**                            | *“Whispers of Truth”* – Survivor of knowledge’s destruction, drawn toward forbidden texts and the Revolutionary Army’s mission.                   |
+| **Baratie**                  | **Neutral Cook/Brawler**                          | *“A Taste of the Grand Line”* – Train as a cook, fend off invading pirates, and discover the art of fighting while feeding allies.                |
+| **Loguetown**                | **Free Choice (Pirate / Marine / Revolutionary)** | *“Dreams at Dawn”* – On the island where the Pirate King died, decide if you’ll follow in his footsteps, uphold justice, or burn the system down. |
+| **Skypiea**                  | **Neutral Adventurer**                            | *“The Sky’s Burden”* – Explore the mysteries of the sky people while dealing with conflicts between Shandians and Skypieans.                      |
+| **Elbaf** (Special Unlock)   | **Giant Warrior’s Path**                          | *“Pride of the Warriors”* – Prove yourself in trials of honor and giant combat before leaving your homeland.                                      |
+
+---
+
+### **C. Initial Dream (Character’s Goal)**
+
+Dreams replace a **traditional class system**. They are **long-term aspirations** that grant **early perks** and expand into **unique skill trees**.
+
+* **“To be the World’s Greatest Swordsman”**
+
+  * Start with a Katana + `/swordsman` skill tree unlocked.
+  * Unique duel quests against rival sword-users.
+
+* **“To Find the All Blue”**
+
+  * Start with cooking recipes + `/cook` buffs.
+  * Craft food that restores HP, buffs allies, or grants travel bonuses.
+
+* **“To Map the World”**
+
+  * Start with a Log Pose + `/navigate`.
+  * Unlocks hidden locations, reduces travel cooldowns, chance to find rare islands.
+
+* **“To Become a Brave Warrior of the Sea”**
+
+  * Start with high base HP + `/brawler` or `/marksman` tree.
+  * Tanky frontline fighter archetype.
+
+* **“To Master Devil Fruits”**
+
+  * Start with knowledge to sense/find Devil Fruits faster.
+  * Unlocks `/fruit.hunt` (higher discovery rate).
+
+* **“To Topple the World Government”**
+
+  * Start aligned closer to Revolutionaries, access to hidden propaganda & sabotage quests.
+  * Unlocks `/rally` – boosts morale and XP gain for nearby allies.
+
+* **“To Become Pirate King”**
+
+  * Balanced buffs across multiple trees, but the hardest path.
+  * Endgame: Unlocks access to **Raftel storyline quests** if the server ever builds a campaign.
+
+---
+
+# ⚓ **Crew & Ally System + Ship Mechanics**
+
+---
+
+## 2. **Crew System (Player Guilds / Parties)**
+
+Crews are the **heart of a One Piece RPG bot**. They’re more than parties — they’re **shared identities**, complete with ships, flags, and reputations.
+
+### **A. Forming a Crew**
+
+* **Requirement:** Captain must have completed their “First Voyage” questline (earning a ship).
+* **Command Example:** `/crew create <name>`
+* **Customization:**
+
+  * Crew Name
+  * Crew Flag (pick from preset icons, unlock custom with quests)
+  * Motto (short text that appears in battles/explorations)
+
+### **B. Crew Roles**
+
+Each role gives a **buff** to the crew, encouraging teamwork.
+
+* **Captain:** Decides direction, sets quests, gives +5% morale (attack buff).
+* **First Mate:** Assists captain, bonus to leadership rolls, keeps crew stable.
+* **Cook:** Provides buffs via `/cook` meals.
+* **Navigator:** Reduces travel cooldowns, finds safe routes.
+* **Doctor:** Can heal allies after fights, reduces death penalty timers.
+* **Shipwright:** Repairs ships faster, can upgrade ship mechanics.
+* **Musician:** Boosts morale with unique buffs (e.g., Brook-style).
+* **Fighter(s):** General crew members (brawlers, snipers, swordsmen).
+
+### **C. Crew Progression**
+
+* **Crew Bounty (Infamy):** Increases as crew completes raids, attacks Marines, or steals treasure.
+* **Crew Reputation:** Distinguishes whether they’re known for *honor, chaos, or cruelty*.
+* **Crew Perks:** Unlockable at milestones (crew size, bounty level, or big victories).
+
+  * Example: At 50 million bounty → unlock *Intimidation aura* (weaker enemies flee at start of fight).
+
+---
+
+## 3. **Ally System (Rooster of Canon Characters)**
+
+Ally system = your “support roster,” like One Piece Legends mobile games. Allies are **canonical characters** you earn through quests, storylines, or gacha-style rolls.
+
+### **A. How Allies Work**
+
+* Players can recruit **NPC allies** to temporarily join their adventures.
+* Allies grant **passive buffs** and can be **summoned in combat** once per fight.
+* Stronger allies = harder quests to unlock.
+
+### **B. Examples of Ally Recruitment**
+
+* **Zoro (Early)** – “The Wandering Swordsman” questline in Shells Town. Buff: +5% sword attack dmg.
+* **Nami (Early)** – Complete navigation quests in Syrup Village. Buff: +5% gold from loot.
+* **Chopper (Mid)** – Medical support ally from Drum Island questline. Buff: heal after battle.
+* **Ace (Special Event)** – Unlock through Marineford event chain. Summon attack: “Fire Fist.”
+* **Sabo (Revolutionary path)** – Unlock after siding with Revolutionaries. Buff: +10% XP gain in rebel quests.
+
+### **C. Ally Limits**
+
+* **Active Roster:** 3 at a time.
+* **Storage Roster:** Unlimited (like a “gallery” of unlocked allies).
+* **Bond Levels:** Improve ally bonuses by completing missions with them.
+
+---
+
+## 4. **Ship Mechanics**
+
+Ships aren’t just transport; they’re **moving bases** for the crew. They scale with the crew’s size, power, and ambitions.
+
+### **A. Ship Types (Tiers)**
+
+1. **Small Boats (1–2 players)** – Rowboats, dinghies. No cannons.
+2. **Medium Ships (Crew of 5+)** – Caravels, sloops. 1–2 cannon slots.
+3. **Large Ships (Crew of 10+)** – Galleons, brigantines. 4+ cannon slots.
+4. **Unique Ships (Quest Unlocks)** – e.g., *Going Merry*, *Thousand Sunny*, or custom builds.
+
+### **B. Ship Stats**
+
+* **Durability (HP)** – How much damage the ship can take.
+* **Speed** – Travel cooldown reduction.
+* **Cargo Space** – How many resources/treasures can be stored.
+* **Firepower** – How many cannons/weapon systems.
+
+### **C. Customization**
+
+* **Figureheads** (boost morale, intimidation, or speed).
+* **Sails** (different colors/patterns affect recognition).
+* **Cabins** (Doctor’s Room = faster healing, Kitchen = better cooking buffs).
+* **Jolly Roger** (crew symbol, boosts intimidation/fame).
+
+### **D. Ship Combat (Crew vs Crew or Crew vs NPC)**
+
+* **Command Example:** `/ship battle <crew>`
+* Turns alternate between *crew maneuvers* and *ship cannons*.
+* Crew members can “board enemy ship” mid-combat for melee fights.
+* Winning grants bounty + resources, losing risks losing cargo or damage costs.
+
+---
+
+## 5. **Combined System Flow**
+
+1. Player creates character (Race + Origin + Dream).
+2. Gains **starter quests**, earns first small boat.
+3. Unlocks **crew creation** after first voyage.
+4. Recruits **allies** from canon storylines.
+5. Expands crew → upgrades ship → enters bigger seas.
+6. Endgame: **Server-wide events** (Marineford War, Enies Lobby Raid, Yonko Battles).
+
+---
+
+# 🚢 **Ship Upgrade Trees**
+
+Ships evolve as your **crew grows stronger**. Instead of just being bigger, upgrades give **branching choices**, letting captains decide if they want a **fast raider, a heavy warship, or a versatile explorer**.
+
+---
+
+## **A. Base Ship Progression**
+
+Every crew starts with a **Small Boat** → upgrades into **Customizable Ships** as milestones are reached.
+
+* **Tier 1 – Dinghy / Rowboat (solo or 1–2 players)**
+
+  * Tiny, fragile, but enough to get started.
+  * No cannons, no storage.
+
+* **Tier 2 – Caravel / Sloop (crew of 3+)**
+
+  * First “real” ship, small cabin space, 1 cannon slot.
+  * Unlocks customization tree.
+
+* **Tier 3 – Brigantine / Medium Galleon (crew of 6+)**
+
+  * Larger ship, multiple cabins, 2–3 cannon slots.
+  * Branching specialization begins here.
+
+* **Tier 4 – Grand Vessel (crew of 10+)**
+
+  * Full crew warship, flagship potential.
+  * 4–6 cannon slots, multiple upgrades unlocked.
+
+* **Tier 5 – Legendary Ship (endgame unlock)**
+
+  * Either a **unique quest ship** (*Going Merry*, *Thousand Sunny*) OR a fully customized build.
+  * Unlocks all special ship mechanics.
+
+---
+
+## **B. Upgrade Tree Paths**
+
+At Tier 3+, crews choose **what type of ship they want to specialize in**.
+
+---
+
+### ⚡ **1. Speed Ship Path – Raiders & Explorers**
+
+Fast ships that excel at **mobility, surprise attacks, and exploration**.
+
+* **Upgrades:**
+
+  * **Reinforced Sails:** Travel cooldown -20%.
+  * **Streamlined Hull:** Higher chance to escape ship battles.
+  * **Crow’s Nest:** Navigator can “spot” hidden islands or ambushes.
+  * **Stormrider Mast (Advanced):** Immune to storm travel penalties.
+  * **Sea Glide Rudder (Legendary):** Halves all travel times, unlocks unique “Hit & Run” battle option.
+
+* **Playstyle:** Perfect for bounty hunters, explorers, or hit-and-run pirates.
+
+---
+
+### 💣 **2. Warship Path – Cannons & Combat**
+
+Heavy ships designed for **crew vs crew naval warfare**.
+
+* **Upgrades:**
+
+  * **Extra Cannon Slots:** +1 firepower slot per upgrade.
+  * **Reinforced Hull:** +20% ship HP each level.
+  * **Ballistae & Harpoons:** Boarding actions easier, disable enemy movement.
+  * **Armored Prow:** Unlocks “Ramming Attack” command.
+  * **Sea Fortress Deck (Legendary):** Full warship with multiple cannon barrages per turn.
+
+* **Playstyle:** Dominates PvP and large-scale faction wars.
+
+---
+
+### 📦 **3. Cargo Ship Path – Traders & Treasure Hunters**
+
+Massive storage and **resource-focused progression**.
+
+* **Upgrades:**
+
+  * **Expanded Cargo Hold:** +20% resource storage per level.
+  * **Secure Vault:** Protects a portion of loot if ship is sunk.
+  * **Merchant Cabin:** Reduces shop/trade costs by 10%.
+  * **Treasure Compass:** Higher rare item discovery rate.
+  * **Floating Market (Legendary):** Allows ship itself to act as a traveling shop/trade hub for crew or allies.
+
+* **Playstyle:** Suited for players who love economy, crafting, or treasure grinding.
+
+---
+
+### 🌊 **4. Explorer Path – Adventurers & Mystery Seekers**
+
+Balanced ships designed for **world events, lore hunting, and unique island access**.
+
+* **Upgrades:**
+
+  * **Log Pose Chamber:** Reduces cooldown between unknown island travels.
+  * **Cartographer’s Cabin:** Navigator gains +15% success finding hidden islands.
+  * **Submersible Gear:** Unlocks underwater exploration quests.
+  * **Sky Lift Rigging:** Access to Sky Islands earlier than other ships.
+  * **Voyager’s Heart (Legendary):** Unlocks story-only islands/events (Raftel, Eternal Pose events, etc.).
+
+* **Playstyle:** Best for crews that want lore-heavy journeys and special questlines.
+
+---
+
+### 🎭 **5. Hybrid / Legendary Path – Endgame Customization**
+
+At Tier 5, crews can **combine elements** from multiple trees or unlock unique ships.
+
+* **Hybrid Builds:**
+
+  * Example: **Fast Warship** (Speed + Warship) → Cannons + Escape options.
+  * Example: **Treasure Raider** (Cargo + Speed) → Holds tons of loot but still travels fast.
+
+* **Legendary Ships:**
+
+  * Unlocked via **server-wide quests or rare storyline events**.
+  * Examples:
+
+    * *Going Merry Replica* (morale boost, hard to sink).
+    * *Thousand Sunny Replica* (Gaon Cannon attack, solar sails = free speed boost).
+    * *Custom Yonko-Class Ship* (named + symbolically tied to crew’s journey).
+
+---
+
+## **C. Crew Ship Management**
+
+* **Shipwright Role** is vital → needed to unlock/repair upgrades.
+* **Resource Costs:** Wood, metal, rare seashells, treasure.
+* **Faction Discounts:** Marines/Revolutionaries get bonuses on warships, Pirates on speed/cargo, Neutral crews on explorers.
+
+---
+
+## **D. Ship Events**
+
+Ships also trigger **server events** when upgraded:
+
+* Warship Tier 4 → crew bounty skyrockets → Marines/Revolutionaries actively hunt them.
+* Explorer Tier 4 → chance to discover server-wide events (Sky Islands, Raftel clues).
+* Cargo Tier 4 → crew becomes target of pirate NPC raids.
+
+---
+
+🔑 In short:
+
+* **Speed Ships** = hit-and-run, explorers, bounty hunters.
+* **Warships** = PvP monsters, faction warfare.
+* **Cargo Ships** = treasure hoarders, economy builders.
+* **Explorer Ships** = lore-driven adventurers.
+* **Legendary/Hybrids** = ultimate crew-defining endgame vessels.
+
+---
+
+# 🤝 **Ally Recruitment – East Blue Saga**
+
+**Core Framework:**
+
+* **Narrative Trigger** – Ally only becomes recruitable after completing their respective arc’s MSQ.
+* **Conditions** – Faction alignment, dream, or role-based prerequisites.
+* **Roster System** – Players can collect many, but only **equip one ally per tier** in their active crew.
+* **Bond System** – Spending time/quests with an ally increases their buffs.
+
+---
+
+## **Romance Dawn Arc – Shells Town**
+
+### 🔪 **Roronoa Zoro (Tier 1 Ally)**
+
+* **Trigger:** Complete “The Tyrant’s Fall” by exposing Captain Morgan.
+* **Conditions:**
+
+  * Pirate/Revolutionary players → can free Zoro from execution.
+  * Marines → can choose to keep him jailed (Zoro unavailable) OR secretly recruit him if they defect.
+* **Buffs:**
+
+  * Passive: +10% sword damage.
+  * Summon Skill: *Onigiri* (multi-hit slash).
+* **Dream Tie-In:**
+
+  * If player’s dream = “World’s Greatest Swordsman,” unique dialogue unlocks and Zoro becomes easier to convince.
+
+---
+
+## **Orange Town Arc – Buggy’s Territory**
+
+### 🤡 **Buggy (Tier 1 Rival Ally / Temporary)**
+
+* **Trigger:** After defeating Buggy.
+* **Conditions:**
+
+  * Pirate/Neutral → Can *force Buggy* into temporary alliance (short-term buff in battles).
+  * Marines/Revolutionaries → Buggy flees, unavailable.
+* **Buffs:**
+
+  * Passive: +10% loot from defeated enemies (greedy).
+  * Summon Skill: *Chop-Chop Cannonball* (single AoE attack).
+* **Special Note:** Buggy is unstable. If kept too long, he may betray the crew in a story event.
+
+---
+
+## **Syrup Village Arc – Kuro’s Deception**
+
+### 🎯 **Usopp (Tier 1 Ally)**
+
+* **Trigger:** Complete “The Usurper’s Ruse,” help defend Kaya and villagers.
+* **Conditions:**
+
+  * Must uncover Kuro’s plot OR survive the ambush fight.
+  * Revolutionary players can sway Usopp by emphasizing protecting villagers.
+  * Pirates can promise him “a future of adventure.”
+* **Buffs:**
+
+  * Passive: +10% ranged weapon accuracy.
+  * Summon Skill: *Pop Green Shot* (deals AoE minor damage).
+* **Dream Tie-In:**
+
+  * If player’s dream = “Brave Warrior of the Sea,” Usopp bonds quicker and unlocks unique quests later.
+
+---
+
+## **Baratie Arc – Krieg’s Assault**
+
+### 🍳 **Sanji (Tier 2 Ally)**
+
+* **Trigger:** Aid Baratie chefs in the Don Krieg battle.
+* **Conditions:**
+
+  * Player must complete cooking-related side quests OR protect Zeff during battle.
+  * Marines cannot recruit Sanji (he openly defies authority).
+  * Pirates/Neutral/Revolutionaries can persuade him.
+* **Buffs:**
+
+  * Passive: +10% cooking buffs last longer.
+  * Summon Skill: *Diable Jambe Kick* (single-target burn effect).
+* **Dream Tie-In:**
+
+  * If player’s dream = “Find the All Blue,” Sanji becomes a guaranteed ally.
+
+---
+
+## **Arlong Park Arc – The Weight of a Promise**
+
+### 🌊 **Nami (Tier 2 Ally)**
+
+* **Trigger:** Complete “The Weight of a Promise” arc by confronting Arlong.
+* **Conditions:**
+
+  * Must either free Nami from Arlong’s control OR negotiate with her through Marines/Revolutionary channels.
+  * Neutral players can recruit her by helping the villagers resist.
+* **Buffs:**
+
+  * Passive: +10% gold and item find.
+  * Summon Skill: *Thunderbolt Tempo* (AoE lightning attack, chance to stun).
+* **Dream Tie-In:**
+
+  * If player’s dream = “Map the World,” Nami joins more easily and grants extra navigation quests.
+
+---
+
+## **Loguetown Arc – Gateway to the Grand Line**
+
+### 🚬 **Smoker (Tier 3 Ally / Rival)**
+
+* **Trigger:** Confront Smoker during the final arc.
+* **Conditions:**
+
+  * Marine players → Smoker can become an ally if loyalty score is high.
+  * Pirate/Revolutionary players → Smoker is an enemy rival, not recruitable.
+* **Buffs (if allied):**
+
+  * Passive: Reduces PvP damage taken by crew.
+  * Summon Skill: *White Blow* (AoE smoke bind attack).
+
+### 🕊️ **Dragon (Tier 3 Ally / Event Ally)**
+
+* **Trigger:** Rare “Revolutionary Contact” event in Loguetown (low % trigger).
+* **Conditions:**
+
+  * Only Revolutionaries can unlock.
+* **Buffs:**
+
+  * Passive: +10% XP for all revolutionary-aligned quests.
+  * Summon Skill: *Storm Gale* (powerful AoE that guarantees escape from battle).
+* **Special:** Dragon cannot stay permanently; he’s a **temporary narrative ally**, representing the Revolution’s support.
+
+---
+
+# 📜 **Ally Tier Rules (East Blue)**
+
+* **Tier 1 (Early Allies):** Zoro, Usopp, Buggy (unstable).
+* **Tier 2 (Mid Allies):** Sanji, Nami.
+* **Tier 3 (Late Allies):** Smoker (Marine), Dragon (Revo, temp).
+* **Limit Rule:** Only **1 ally per tier** can be equipped in active crew. Others remain in the roster gallery.
+
+---
+
+# ⚔️ Crew vs Crew (CvC) PvP Mechanics
+
+## **1. Battle Setup**
+
+* **Command**: `/pvp challenge @crewname`
+
+* **Arena Options**:
+
+  * **High Seas** (open ocean battle, focuses on Ship + Cannon mechanics).
+  * **Island Raid** (crew fights on land, focused on crew members + allies).
+  * **Mixed Battle** (ship vs ship until one side boards the other; combines both).
+
+* **Party Slots**:
+
+  * Each crew selects **up to 6 active members** (players + their allies).
+  * Ship is treated as a “7th slot” with HP, upgrades, and cannon damage.
+  * Substitute system: benched members can swap in mid-battle at cost of 1 turn.
+
+---
+
+## **2. Turn Structure (Semi-Tactical)**
+
+PvP is **turn-based**, because real-time combat is hard to manage in Discord.
+
+* **Initiative**: Random roll + Ship’s “Sailing” stat influences order.
+* **Actions per turn**:
+
+  * Attack (basic or skill-based).
+  * Special Move (DF ability, Haki, Weapon Art, Ally Unique Skill).
+  * Ship Action (cannon barrage, evasive maneuver, boarding action).
+  * Support (heal, buff, rally).
+
+---
+
+## **3. Ship Role in PvP**
+
+Ships aren’t just background—they define the **combat terrain**.
+
+* **HP & Armor**: If Ship HP hits 0, crew automatically loses.
+* **Upgrade Effects** (from your Ship Tree):
+
+  * **Hull Plating**: Reduces all incoming cannon damage by % value.
+  * **Sails Upgrade**: Crew attacks have +Speed bonus (higher initiative).
+  * **Special Modules**: Unique moves (Flame Cannon, Reinforced Ramming, etc.).
+
+---
+
+## **4. Crew & Ally Combat Roles**
+
+Each crew slot fills a role (similar to RPG party balance).
+
+* **Striker (Damage Dealer)**: Zoro, Sanji-type allies.
+* **Support (Buff/Healer)**: Chopper, Kaya, Revolutionary Doctors.
+* **Tactician (Debuff/Control)**: Usopp, Nami (weather, illusions, traps).
+* **Tank/Defender**: Marine soldiers, strong NPC allies, armored characters.
+* **Wild Card (Unique)**: Devil Fruit or dream-specific roles (e.g., Cook buffs food mid-battle, Cartographer reads enemy tactics).
+
+---
+
+## **5. PvP Rewards**
+
+* **Bounty Increase**: Winners gain Bounty across crew (loss also may slightly raise notoriety).
+* **Loot**: Small chance of stealing resources (berries, timber, cannonballs).
+* **Ranked Rewards**: If ranked ladder is enabled, monthly rewards (titles, rare mats, cosmetic Jolly Roger upgrades).
+* **Prestige**: Crew “Notoriety” leaderboard that changes server status (your crew might be called “Terrors of the East Blue”).
+
+---
+
+## **6. Balance Mechanics**
+
+* **Tier Restrictions**: Crews can’t bring multiple “S-tier” allies like Zoro + Sanji + Smoker at once. Limit: 1 S-tier, 2 A-tier, rest B/C.
+* **Stamina System**: Crew members and allies have limited stamina per PvP week. Prevents spam-farming.
+* **Ship Balance**: Even if one crew has stronger members, weaker crew with stronger ship upgrades can still win.
+
+---
+
+## **7. Advanced Modes**
+
+* **Crew Brawl (3v3)**: Smaller skirmishes for quick battles.
+* **Fleet Wars** (future Grand Line expansion): Multiple crews ally and fight in large-scale wars with raid-like mechanics.
+* **Territory Control**: PvP that decides control of Islands (dock taxes, resource multipliers).
+
+---
+
+# 🏝️ East Blue Islands & Territories
+
+Each island is both a **story hub** (for MSQ/Ally recruitment) and a **strategic territory** (for crew control, resources, PvP).
+
+---
+
+## **1. Dawn Island (Foosha Village)**
+
+* **Narrative Role**: Starting area (tutorial hub). Players spawn here or nearby based on origin.
+* **Territory Bonus**: Basic resources (wood, food). Small XP boost for low-level players.
+* **Control Feature**: Mostly symbolic — crews can plant their **first Jolly Roger** here (your "home port").
+
+---
+
+## **2. Shells Town**
+
+* **Narrative Role**: Marine hub (Captain Morgan arc). MSQ for Marine origin players.
+* **Territory Bonus**: Access to **Marine training grounds** (combat stat boosts, recruit basic Marine NPC allies).
+* **Control Feature**:
+
+  * Marines = natural defenders.
+  * Pirates/Revs must raid it to weaken Marine presence (PvP event).
+
+---
+
+## **3. Orange Town**
+
+* **Narrative Role**: Buggy’s domain. MSQ includes first DF-user fight.
+* **Territory Bonus**:
+
+  * “Circus Loot” → Berries & Trinkets (sellable resources).
+  * Shops offer **cheap cannonballs** (early naval advantage).
+* **Control Feature**:
+
+  * Whoever controls Orange Town can set **trade taxes** (5–15% cut of all shop purchases).
+  * Boosts crew income.
+
+---
+
+## **4. Syrup Village**
+
+* **Narrative Role**: Usopp + Black Cat Pirates. Ship acquisition quests.
+* **Territory Bonus**: **Shipyard Access** → Cheaper ship upgrades and repairs.
+* **Control Feature**:
+
+  * Controlling Syrup lets your crew build ships faster.
+  * Other crews pay a fee for repairs unless allied.
+
+---
+
+## **5. Baratie (Floating Restaurant)**
+
+* **Narrative Role**: Sanji arc, Krieg Pirates confrontation.
+* **Territory Bonus**: **Food Buffs** → Crew meals give PvP/PvE buffs (HP regen, ATK up, DEF up).
+* **Control Feature**:
+
+  * Controlling crews set the **menu price**.
+  * Neutral option: leave it open for all (gain passive “reputation” instead of tax).
+
+---
+
+## **6. Arlong Park (Cocoyashi Village)**
+
+* **Narrative Role**: Arlong’s reign of terror. MSQ moral dilemma.
+* **Territory Bonus**:
+
+  * Control over **Fish-Man Resources** (rare corals, exotic fish = crafting mats).
+  * **Combat Training Buffs** if your crew allies with freed villagers.
+* **Control Feature**:
+
+  * If Marines/Revs liberate, they gain **moral prestige** (reputation boost).
+  * If Pirates control, they gain **tribute tax** (villagers pay weekly).
+
+---
+
+## **7. Loguetown** (Final Island in East Blue)
+
+* **Narrative Role**: Bridge to Grand Line (Smoker, execution platform).
+* **Territory Bonus**:
+
+  * Access to **Grand Line Charts** (unlocking next saga).
+  * **Bounty Board Hub** (PvP rankings visible here).
+* **Control Feature**:
+
+  * No single crew can hold Loguetown forever → it’s a **Contested Zone** (weekly crew battles decide control).
+  * Winner gains **server-wide fame** (title: “Rulers of Loguetown”).
+
+---
+
+# ⚔️ Territory Control Mechanics
+
+1. **Capturing an Island**
+
+   * Crew challenges current holders → PvP event or PvE raid vs NPC defenders.
+   * Requires planting **Jolly Roger** at Dock/Town Square.
+
+2. **Maintaining Control**
+
+   * Weekly upkeep → crew must defend vs NPC raids or rival crews.
+   * If upkeep fails, territory becomes **Contested** again.
+
+3. **Benefits of Control**
+
+   * Economic: taxes, trade boosts, discounts on upgrades.
+   * Social: reputation titles, special NPC allies.
+   * Combat: buffs when fighting on “your” island.
+
+4. **Faction Influence**
+
+   * **Pirates** → Tax villages, extort resources.
+   * **Marines** → Establish “Justice HQs,” reduce pirate presence.
+   * **Revolutionaries** → Free islands, inspire rebellion (gain hidden support).
+   * **Neutral** → Maintain balance, gain rep without forcing taxes.
+
+---
+
+# 🗺️ Suggested Flow for East Blue Control
+
+* Crews start with **Dawn Island (Foosha)** → symbolic base.
+* Move outward: Shells/Orange/Syrup/Baratie → “mid-tier” territories.
+* Arlong Park = first **major contested territory**.
+* Loguetown = endgame hub, rotating control via **weekly wars**.
+
+---
+
+# ⚔️ **Faction Quests System**
+
+Faction quests differ from MSQ in three key ways:
+
+1. **Repeatable / Procedural** → Keeps gameplay loop engaging beyond main arcs.
+2. **Reputation-Oriented** → Completing them raises faction rep and unlocks unique gear, perks, or allies.
+3. **Dynamic Goals** → Change depending on player progression, island control, and PvP events.
+
+---
+
+## 🟦 **Marine Faction Quests** (Justice & Order)
+
+Marines focus on maintaining order and suppressing pirate/Revolutionary influence.
+
+**Quest Examples**:
+
+* **Bounty Hunt Patrol**: Track down a wanted NPC pirate across nearby islands. Higher reputation unlocks hunts for **player crews** with high bounties.
+* **Supply Escort**: Safeguard a Marine convoy ship until it reaches Loguetown. PvP risk: pirate crews can intercept.
+* **Island Garrison Duty**: Help defend a Marine-controlled island from NPC pirate raids.
+* **Undercover Sting**: Gather intel on local crime (dialogue mini-quest, leads to ambush).
+* **Reputation Tiers Unlock**:
+
+  * *Petty Officer*: Access to basic Navy swords & rifles.
+  * *Lieutenant*: Call NPC Marines to aid in battle once per day.
+  * *Captain*: Eligible to command a Marine warship (PvP advantage).
+
+---
+
+## ☠️ **Pirate Faction Quests** (Freedom & Infamy)
+
+Pirates thrive on chaos, raiding, and building a notorious name.
+
+**Quest Examples**:
+
+* **Raid & Plunder**: Attack a merchant convoy ship and steal cargo (berries, materials).
+* **Smuggling Run**: Deliver contraband items between islands while avoiding Marines.
+* **Territory Shakedown**: Extort villagers on controlled islands for tribute (increases income but lowers local loyalty).
+* **Rumor Mongering**: Spread your name in taverns, raising bounty but lowering Marine reputation.
+* **Reputation Tiers Unlock**:
+
+  * *Rookie*: Cheaper ship repairs at shady docks.
+  * *Supernova*: Unique pirate techniques / black-market gear.
+  * *Warlord Potential*: Ability to control multiple territories without constant upkeep.
+
+---
+
+## 🔺 **Revolutionary Faction Quests** (Freedom Fighters)
+
+Revolutionaries focus on gathering intel, freeing villages, and destabilizing World Government influence.
+
+**Quest Examples**:
+
+* **Free the Oppressed**: Help villagers resist pirate or Marine control (earn trust, lower rival influence).
+* **Sabotage Mission**: Plant explosives on a Marine outpost or disrupt supply lines.
+* **Espionage Network**: Recruit NPC informants in taverns (increases chance of discovering rare quests).
+* **Smuggle Scholars**: Escort a historian or outlawed researcher safely across islands.
+* **Reputation Tiers Unlock**:
+
+  * *Cell Member*: Craft camouflage gear (stealth advantage).
+  * *Field Commander*: Deploy NPC rebels in island battles.
+  * *Revolutionary Officer*: Gain access to Cipher Pol info leaks (early warning of raids).
+
+---
+
+## ⚖️ **Neutral (Baratie/Adventurer/Explorer)**
+
+Neutral players aren’t bound to strict factions but still have unique tasks. Their quests are more about exploration, trade, and survival.
+
+**Quest Examples**:
+
+* **Merchant Escort**: Protect neutral traders in exchange for rare crafting mats.
+* **Treasure Hunt**: Follow maps leading to buried loot.
+* **Resource Expeditions**: Gather rare fish, herbs, or minerals.
+* **Peacekeeping**: Resolve disputes without choosing a side (negotiation/diplomacy).
+* **Reputation Tiers Unlock**:
+
+  * *Explorer*: Reduced travel time between islands.
+  * *Navigator*: Can chart new islands earlier than others.
+  * *Adventurer’s Guild Leader*: Unlocks “guild contracts” where players hire you for protection/quests.
+
+---
+
+# 🎯 **Faction Quest Mechanics**
+
+* **Daily / Weekly Quests** → To keep engagement consistent.
+* **Procedural Objectives** → Randomize NPC targets, islands, cargo types, etc.
+* **Dynamic Scaling** → Quest difficulty/rewards scale with player level and saga progress.
+* **Reputation Bar** → Unlocks faction-specific cosmetics, skills, ships, and allies.
+* **PvP Hooks** → Some quests (escort, sabotage, raids) can trigger open-world PvP with rival factions.
+
+---
+
+# ⚔️ **Reputation Rewards Progression Trees**
+
+---
+
+## 🟦 Marines – *Justice Through Strength*
+
+Focus: **Authority, order, military gear, and command power.**
+
+**Rank 1 – Recruit (0–999 Rep)**
+
+* Title: *Petty Officer*
+* Rewards:
+
+  * Access to basic Navy sword & rifle.
+  * Uniform cosmetic skin (Marine coat).
+  * Small HP boost when fighting on Marine-controlled islands.
+
+**Rank 2 – Officer (1000–2999 Rep)**
+
+* Title: *Lieutenant*
+* Rewards:
+
+  * `/callmarines` → Summon 2 Marine NPCs once per day for PvE aid.
+  * Discount at Marine weapon shops.
+  * “Seastone Bullets” unlock for ranged fighters (anti-DF buff).
+
+**Rank 3 – Commander (3000–5999 Rep)**
+
+* Title: *Captain*
+* Rewards:
+
+  * Command a **Marine Cutter Ship** (faster pursuit vessel).
+  * New skill: **“Justice Rally”** → Buffs nearby allies in PvP (ATK + DEF).
+  * Higher-tier bounty hunt quests available.
+
+**Rank 4 – Elite (6000–9999 Rep)**
+
+* Title: *Commodore*
+* Rewards:
+
+  * Unique ship upgrade → “Justice Cannon” (extra-long range).
+  * Passive buff: Reduced damage from Pirate faction NPCs.
+  * Access to Cipher Pol intel quests (spy missions).
+
+**Rank 5 – Flag Officer (10,000+ Rep)**
+
+* Title: *Rear Admiral*
+* Rewards:
+
+  * Authority to set **Marine patrols** on controlled islands.
+  * Legendary gear: “Justice Coat” cosmetic with +10% defense.
+  * Eligible for Grand Line promotion story arc.
+
+---
+
+## ☠️ Pirates – *Infamy & Freedom*
+
+Focus: **Gold, bounties, outlaw perks, and intimidation.**
+
+**Rank 1 – Rookie (0–999 Rep)**
+
+* Title: *Rookie Pirate*
+* Rewards:
+
+  * Access to shady dock repairs (cheaper but lower quality).
+  * Pirate flag cosmetic for ship.
+  * Gain small bonus berries when looting.
+
+**Rank 2 – Rising Star (1000–2999 Rep)**
+
+* Title: *Notorious*
+* Rewards:
+
+  * Unique weapon skin (rusty cutlass, flintlock).
+  * `/rumorspread` → Increase your bounty for notoriety gain.
+  * Special black-market vendors unlocked.
+
+**Rank 3 – Supernova (3000–5999 Rep)**
+
+* Title: *Supernova*
+* Rewards:
+
+  * Access to a **Pirate Brig Ship** (balanced speed + cargo).
+  * “Crew Feast” → temporary ATK/HP boost after plundering.
+  * Gain 10% extra tribute from controlled villages.
+
+**Rank 4 – Infamous (6000–9999 Rep)**
+
+* Title: *Scourge of East Blue*
+* Rewards:
+
+  * Unique ship upgrade: “Hidden Smuggler’s Bay” (extra cargo slot).
+  * PvP passive: Enemies gain +5% bounty when defeated by you.
+  * Ability to intimidate NPC villagers (skip small fetch quests).
+
+**Rank 5 – Legend (10,000+ Rep)**
+
+* Title: *Pirate Warlord Candidate*
+* Rewards:
+
+  * Eligible for special **Warlord storylines**.
+  * Legendary cosmetic: Blood-red pirate coat.
+  * Crew-wide passive: “Infamy Aura” → raises morale in PvP.
+
+---
+
+## 🔺 Revolutionaries – *Freedom & Secrets*
+
+Focus: **Stealth, sabotage, liberation, and intelligence.**
+
+**Rank 1 – Recruit (0–999 Rep)**
+
+* Title: *Cell Member*
+* Rewards:
+
+  * Camouflage cosmetic (hooded cloak).
+  * `/hide` command → reduces chance of NPC encounter when traveling.
+  * Discounted tools from rebel merchants.
+
+**Rank 2 – Operative (1000–2999 Rep)**
+
+* Title: *Field Operative*
+* Rewards:
+
+  * Unlock crafting recipes for smoke bombs and traps.
+  * Access to rebel safehouses (free heals, supplies).
+  * Small EXP boost when sabotaging Marine/Pirate property.
+
+**Rank 3 – Commander (3000–5999 Rep)**
+
+* Title: *Field Commander*
+* Rewards:
+
+  * Deploy **NPC Rebel Fighters** in PvE/PvP events.
+  * Passive buff: +10% damage to Marines in combat.
+  * Access to “Cipher Pol Intercepted Files” (reveals enemy patrol routes).
+
+**Rank 4 – Veteran (6000–9999 Rep)**
+
+* Title: *Revolutionary Officer*
+* Rewards:
+
+  * New ship upgrade: “Silent Runner” (faster stealth sailing).
+  * Ability to flip minor villages into “rebel sympathizers.”
+  * “Rebel Rally” → temporary buff to ally morale.
+
+**Rank 5 – Elite (10,000+ Rep)**
+
+* Title: *Revolutionary Commander*
+* Rewards:
+
+  * Eligible for Dragon’s personal storyline in Grand Line saga.
+  * Legendary cosmetic: Red revolutionary cloak.
+  * Passive: “Liberator’s Presence” → reduces upkeep cost on liberated territories.
+
+---
+
+## ⚖️ Neutral/Adventurers – *Exploration & Trade*
+
+Focus: **Discovery, crafting, and survival without heavy faction ties.**
+
+**Rank 1 – Explorer (0–999 Rep)**
+
+* Title: *Wanderer*
+* Rewards:
+
+  * Explorer’s outfit cosmetic.
+  * Discount on tavern inn prices.
+  * Slight travel speed boost on world map.
+
+**Rank 2 – Pathfinder (1000–2999 Rep)**
+
+* Title: *Navigator*
+* Rewards:
+
+  * Access to detailed maps (reduce travel RNG risk).
+  * Unique `/scout` command → spot hidden resource nodes.
+  * Rare material find rate +5%.
+
+**Rank 3 – Adventurer (3000–5999 Rep)**
+
+* Title: *Treasure Hunter*
+* Rewards:
+
+  * Access to **Treasure Maps quests**.
+  * Discounted ship repairs at neutral docks.
+  * Passive: “Survivor’s Luck” → lower death penalty in PvE.
+
+**Rank 4 – Explorer’s Guild (6000–9999 Rep)**
+
+* Title: *Guild Officer*
+* Rewards:
+
+  * Build contracts → hire players/NPCs for expeditions.
+  * Unique ship upgrade: “Expanded Cargo Hold.”
+  * Can trade directly with any faction without penalty.
+
+**Rank 5 – Legend (10,000+ Rep)**
+
+* Title: *Adventurer’s Guild Leader*
+* Rewards:
+
+  * Cosmetic: Ornate explorer’s coat + compass.
+  * Passive: “Guild Network” → better trading rates across all islands.
+  * Eligible for “Neutral Grand Voyage” storyline in Grand Line.
+
+---
+
+# 🎯 Why This Works
+
+* **Every faction feels unique**: Marines = authority, Pirates = infamy, Revs = secrecy, Neutrals = freedom.
+* **Tiered growth**: tangible milestones (gear, ships, allies).
+* **Narrative hooks**: Each Rank 5 opens up new Grand Line arcs tied to your chosen path.
+
+---
+
+# 🚢 Crew-Wide Reputation Benefits
+
+## 🔑 Core Principles
+
+1. **Shared Reputation Pool** → Each crew has a “Crew Rep” value = the **sum of its members’ reputation contributions** (scaled to prevent stacking abuse).
+2. **Faction Alignment** → Crew inherits the **majority faction alignment** of its members. (E.g., if 70% Marines → Crew is Marine-aligned).
+3. **Crew Perks** unlock at milestones of **Crew Rep**, just like individuals do.
+4. **Discord Integration** → Crew perks = unlocked via slash commands (/crew\.perks, /crew\.stats), and buff effects can show as role tags or automated messages.
+
+---
+
+## 🟦 Marines – *Order of Justice*
+
+Focus: **Discipline, defense, and control.**
+
+* **Crew Rep Rank 1 – Patrol Unit (0–4999)**
+
+  * Crew tag in Discord: `[Marine Patrol]`
+  * Shared Perk: Crew-wide **5% HP buff in Marine territories**.
+  * Command Unlock: `/crew.callpatrol` → summon a small NPC patrol during island defense.
+
+* **Crew Rep Rank 2 – Marine Squadron (5000–14,999)**
+
+  * Shared Perk: **Cheaper ship repairs** at Marine docks.
+  * Discord Role: “Marine Squadron” with channel access to classified faction missions.
+  * Command Unlock: `/crew.alert` → ping all crew members with faction alert (like a patrol mission).
+
+* **Crew Rep Rank 3 – Justice Fleet (15,000–29,999)**
+
+  * Shared Perk: Unlocks **fleet warship docking access** in Shells Town.
+  * PvP Buff: +5% defense when defending Marine-controlled islands.
+  * Command Unlock: `/crew.drill` → all online crew members gain temporary combat buff.
+
+* **Crew Rep Rank 4 – Regional HQ (30,000–59,999)**
+
+  * Shared Perk: Can establish a **Marine HQ** on one controlled island (buffs all allies docked there).
+  * Discord Integration: Dedicated HQ channel → bot posts event summaries, patrol reports.
+  * Command Unlock: `/crew.enforce` → declare Martial Law on island (tax cut, enemy PvP harder).
+
+* **Crew Rep Rank 5 – Admiralty Fleet (60,000+)**
+
+  * Shared Perk: Global prestige → All crew members gain **+10% bounty on defeating pirates**.
+  * Discord Role: “Marine Admiralty Fleet” (highest tier).
+  * Command Unlock: `/crew.mobilize` → trigger server-wide PvP event (call for Marine allies).
+
+---
+
+## ☠️ Pirates – *Infamy & Brotherhood*
+
+Focus: **Plunder, intimidation, and chaos.**
+
+* **Crew Rep Rank 1 – Rookie Crew (0–4999)**
+
+  * Crew tag: `[Rookie Pirates]`
+  * Shared Perk: +5% berries earned from raids.
+  * Command Unlock: `/crew.feast` → short crew-wide morale buff after plundering.
+
+* **Crew Rep Rank 2 – Notorious Band (5000–14,999)**
+
+  * Shared Perk: Tribute collection unlocked on controlled islands.
+  * PvP Buff: Crew gains +3% ATK when fighting Marines.
+  * Discord Role: “Notorious Band” (shows under pirate role).
+
+* **Crew Rep Rank 3 – Supernova Fleet (15,000–29,999)**
+
+  * Shared Perk: **Black Market Dealer** NPC spawns on their flagship.
+  * Command Unlock: `/crew.smuggle` → deliver contraband, generates passive crew income.
+  * PvP Buff: +5% attack in Pirate-controlled seas.
+
+* **Crew Rep Rank 4 – Sea Tyrants (30,000–59,999)**
+
+  * Shared Perk: +10% tribute from villages.
+  * Crew can fly a **custom Jolly Roger flag** visible in Discord (bot embeds it in channels).
+  * Command Unlock: `/crew.intimidate` → chance to avoid PvP skirmishes with weaker crews.
+
+* **Crew Rep Rank 5 – Pirate Warlords (60,000+)**
+
+  * Shared Perk: Recognized as a Warlord candidate → immune to upkeep costs on 1 island.
+  * Discord Role: “Sea Warlords” with color-highlighted names.
+  * Command Unlock: `/crew.warlordraid` → trigger server-wide PvP raid (crew event).
+
+---
+
+## 🔺 Revolutionaries – *Freedom Network*
+
+Focus: **Liberation, sabotage, stealth.**
+
+* **Crew Rep Rank 1 – Rebel Cell (0–4999)**
+
+  * Crew tag: `[Rebel Cell]`
+  * Shared Perk: -10% travel time between islands.
+  * Command Unlock: `/crew.hide` → temporary reduced PvP detection.
+
+* **Crew Rep Rank 2 – Rebel Squadron (5000–14,999)**
+
+  * Shared Perk: Free heals & supplies at liberated villages.
+  * PvP Buff: +5% ATK vs Marines.
+  * Discord Role: “Rebel Squadron” (secret channel with coded intel updates).
+
+* **Crew Rep Rank 3 – Revolutionary Division (15,000–29,999)**
+
+  * Shared Perk: Deploy Rebel NPC squads during defense events.
+  * Command Unlock: `/crew.sabotage` → temporarily weaken enemy-controlled island defenses.
+  * Discord Buff: Bot posts “rebel whispers” → hints about rare quests/resources.
+
+* **Crew Rep Rank 4 – Shadow Network (30,000–59,999)**
+
+  * Shared Perk: Can secretly flip NPC villages into Rebel sympathizers.
+  * PvP Buff: Enemies fighting them lose -5% morale.
+  * Discord Role: “Shadow Network” → access faction-exclusive spy reports.
+
+* **Crew Rep Rank 5 – Army of Liberation (60,000+)**
+
+  * Shared Perk: Recognized as a Revolutionary Fleet → can bypass Marine blockades.
+  * Command Unlock: `/crew.liberate` → server-wide event to free an island.
+  * Discord Buff: Crew tag shows glowing “🔥Liberators🔥”.
+
+---
+
+## ⚖️ Neutrals / Adventurers – *Guild of Exploration*
+
+Focus: **Discovery, trade, utility.**
+
+* **Crew Rep Rank 1 – Travelers’ Band (0–4999)**
+
+  * Shared Perk: Slightly cheaper tavern costs.
+  * Command Unlock: `/crew.mapshare` → share discovered island maps with allies.
+
+* **Crew Rep Rank 2 – Explorer Crew (5000–14,999)**
+
+  * Shared Perk: Increased rare resource find rate.
+  * PvP Buff: +3% defense against Pirates.
+  * Discord Role: “Explorer Crew” → guild board channel access.
+
+* **Crew Rep Rank 3 – Treasure Fleet (15,000–29,999)**
+
+  * Shared Perk: Unlocks **crew-only treasure hunts** (hidden island events).
+  * Command Unlock: `/crew.trade` → crew stall opens, other players can buy/sell.
+  * Buff: +10% earnings from neutral island shops.
+
+* **Crew Rep Rank 4 – Merchant Guild (30,000–59,999)**
+
+  * Shared Perk: Free docking at neutral ports.
+  * PvP Buff: Crew gains +5% speed in naval battles.
+  * Discord Buff: Crew gets a “Trader’s Mark” custom emoji in chat.
+
+* **Crew Rep Rank 5 – Adventurer’s Guild (60,000+)**
+
+  * Shared Perk: Recognized as leaders of neutral trade → passive income from server-wide market taxes.
+  * Command Unlock: `/crew.contracts` → hire other players for missions (bot posts contract).
+  * Discord Buff: Custom crew banner embed (artwork).
+
+---
+
+# 🛠️ Discord Bot Implementation
+
+* **Reputation tracking**: Stored per user & per crew in database.
+* **Commands**:
+
+  * `/crew.stats` → Shows current crew rep, perks unlocked, faction alignment.
+  * `/crew.perks` → Lists all crew-wide perks available.
+  * `/crew.use [perk]` → Activates crew-wide perk (if cooldown met).
+* **Discord Integration**:
+
+  * Crew rank = Discord role auto-assigned.
+  * Bot posts milestone announcements in server (e.g., “The Pirate Crew *Bloodfangs* has become a Sea Tyrant!”).
+  * Crew perks like “HQ” or “Contracts” = separate channels the bot manages.
+
+---
+
+# 📜 Crew Contracts System
+
+## 🔑 Core Principles
+
+1. **Player-Driven Economy** → Crews generate jobs, not just the bot.
+2. **Faction Influence** → Contracts can help or sabotage faction reputation.
+3. **Discord Integration** → Jobs show up as bot posts in a **Contract Board Channel**, managed by commands.
+4. **Risk vs Reward** → High-paying contracts often involve PvP risk or reputation consequences.
+
+---
+
+## ⚙️ Workflow: How Contracts Work
+
+1. **Posting a Contract**
+
+   * Command: `/crew.contract.post`
+   * Options:
+
+     * **Type** (Escort / Trade / Raid / Liberation / Exploration / Hunt / Spy)
+     * **Reward** (Berries, Resources, Item, or Reputation)
+     * **Target/Objective** (Island, Crew, NPC)
+     * **Difficulty** (Ranked Easy → Legendary)
+   * Cost: Small upfront posting fee (prevents spam).
+   * Bot posts an embed in **#contracts-board** with all details.
+
+2. **Accepting a Contract**
+
+   * Command: `/crew.contract.accept [contractID]`
+   * Crew locks in as contractor.
+   * Contract moves from “Available” → “In Progress”.
+   * Bot announces in #contract-updates (like a bounty board).
+
+3. **Completion/Failure**
+
+   * Upon success:
+
+     * Contractor crew receives reward.
+     * Posting crew reputation + resources adjust accordingly.
+     * Bot posts a summary event in **#world-news**.
+   * Upon failure (timeout or loss):
+
+     * Contractor loses rep/resources.
+     * Posting crew may recover partial deposit.
+     * Rival crews may “steal” the contract by intercepting.
+
+---
+
+## ⚔️ Contract Types
+
+### 1. Escort Contracts
+
+* **Goal**: Safely escort a ship or NPC between two islands.
+* **Risks**: Other players can intercept → PvP chance.
+* **Reward**: Berries, small rep boost with target faction.
+* **Commands**: `/crew.contract.escort start` → triggers travel event sequence.
+
+### 2. Trade / Smuggling Contracts
+
+* **Goal**: Deliver goods for profit.
+* **Risks**: Interceptable, Marines can confiscate smuggled items.
+* **Reward**: High berries, black market access.
+* **Twist**: If Marines discover → rep loss + PvP.
+
+### 3. Raid Contracts
+
+* **Goal**: Attack rival crew or island.
+* **Risks**: Full PvP event.
+* **Reward**: Crew rep with Pirates/Revs, stolen loot.
+* **Consequence**: Target faction increases hostility.
+
+### 4. Liberation Contracts (Revolutionary-Specific)
+
+* **Goal**: Free an NPC village from Marine/Pirate control.
+* **Reward**: Faction rep with Revolutionaries, bonus recruits.
+* **Twist**: Target crew may counter-contract Marines.
+
+### 5. Exploration Contracts (Neutral-Focused)
+
+* **Goal**: Chart new islands, retrieve treasure maps, scout routes.
+* **Reward**: Resources, treasure maps, reputation with Adventurer’s Guild.
+* **Bot Output**: Unlocks “hidden location” sidequests for the contractor crew.
+
+### 6. Hunt Contracts (Bounty / Monster Hunts)
+
+* **Goal**: Defeat NPC boss or capture a pirate captain.
+* **Reward**: High bounty payout, fame.
+* **Faction Effect**: Marines gain big rep from player bounty captures.
+
+### 7. Spy / Sabotage Contracts
+
+* **Goal**: Gather intel on rival crew activities or weaken defenses.
+* **Reward**: Reputation with Revolutionaries or Pirates.
+* **Twist**: High risk → discovery = bounty increase on your crew.
+
+---
+
+## 🏴‍☠️ Discord Integration
+
+* **Channels**
+- Allow Administrator only to decide where these channels goes. Do not auto create it. Let administrator do it manually:
+  * `#contracts-board` → Bot posts active contracts (embed style).
+  * `#contract-updates` → Tracks ongoing contracts.
+  * `#world-news` → Bot posts summaries of completed/failed contracts → creates living story.
+
+* **Embeds Example**
+
+```
+📜 New Contract Posted!
+Crew: Bloodfang Pirates  
+Type: Raid Contract  
+Target: Shells Town (Marine Outpost)  
+Difficulty: Hard ⚔️  
+Reward: 5000 Berries + +200 Pirate Rep  
+Expires: 48 hours  
+
+💰 Use /crew.contract.accept 21 to accept.
+```
+
+* **Auto Announcements**
+
+  * Success → “The Bloodfang Pirates successfully raided Shells Town, plundering Marine supplies!”
+  * Failure → “The escort crew was ambushed! The Marines reclaimed their stolen cargo.”
+
+---
+
+## 🔥 Crew-Wide Tie-ins
+
+* **Faction Synergy** → Some contracts give **crew rep boosts** that apply to Crew Perks progression.
+* **Economy** → Completed contracts generate **passive crew income** if trade routes are secured.
+* **PvP Hooks** → Rival crews can ambush contracts mid-progress.
+
+---
+
+## 📈 Progression & Scaling
+
+* **Contract Rank** (E → SS) → Determines difficulty, PvP risk, and reward tier.
+* **Crew Reputation Rank** → Higher rank = ability to post more lucrative contracts.
+* **Cooldowns** → A crew can post **1 major contract per day**, but accept multiple smaller ones.
+
+---
