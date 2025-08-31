@@ -1,3 +1,5 @@
+const { Events, ActivityType } = require('discord.js');
+
 module.exports = {
     name: Events.ClientReady,
     once: true,
@@ -14,4 +16,4 @@ module.exports = {
         const totalUsers = client.guilds.cache.reduce((acc, guild) => acc + guild.memberCount, 0);
         console.log(`[BOT] Monitoring ${totalUsers} total users across all guilds`);
       }
-    }
+    };
