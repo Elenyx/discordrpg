@@ -7,7 +7,7 @@ const {
   SectionBuilder,
   ContainerBuilder,
   ButtonBuilder,
-  ActionRowBuilder, // Correctly import ActionRowBuilder
+  ActionRowBuilder, // This import is crucial
 } = require('discord.js');
 const { Player } = require('../../database');
 
@@ -232,7 +232,7 @@ module.exports = {
     } catch (error) {
       console.error('Error in start command:', error);
 
-      if (error.code === 'InteractionCollectorError') {
+      if (error.code === 'InteractionCollectorError' || error.message.includes('collector')) {
         const timeoutContainer = buildTextContainer(
           '⏰ **Character creation timed out.**\nPlease try again with `/start` when you\'re ready.',
           0x95a5a6
@@ -240,7 +240,7 @@ module.exports = {
         await interaction.editReply({
           components: [timeoutContainer],
           flags: MessageFlags.IsComponentsV2
-        });
+        }).catch(() => {}); // Suppress errors if the interaction is already gone
       } else {
         const errorContainer = buildTextContainer(
           '⚠️ **An error occurred during character creation.**\nPlease try again with `/start`.',
@@ -251,12 +251,12 @@ module.exports = {
             await interaction.editReply({
                 components: [errorContainer],
                 flags: MessageFlags.IsComponentsV2
-            });
+            }).catch(() => {});
         } else {
             await interaction.reply({
                 components: [errorContainer],
                 flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral
-            });
+            }).catch(() => {});
         }
       }
     }
