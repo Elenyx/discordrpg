@@ -3,6 +3,8 @@ const BaseQuest = require('../BaseQuest');
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder } = require('discord.js');
 const raceSteps = require('./RaceSpecificSteps');
 const { morganFightMiniGame } = require('../utils/MiniGames');
+const { generateToken, consumeToken, deleteToken } = require('../../utils/tokenStore');
+const { writeLog } = require('../../utils/fileLogger');
 
 class RomanceDawn extends BaseQuest {
     // static identifier used by the QuestManager registration
@@ -255,6 +257,17 @@ class RomanceDawn extends BaseQuest {
 
             case 'fight_morgan':
                 console.info(`RomanceDawn: fight_morgan interaction for player=${this.player?.discordId || this.player?.id || 'unknown'}`);
+                // If there is a transient token payload attached to the interaction, respect it and enforce retry limits
+                const tokenPayload = interaction.tokenPayload || null;
+                const originalTransient = interaction.transientToken || null;
+                if (tokenPayload && tokenPayload.retries >= 3) {
+                    writeLog('interactions.log', `Retry limit reached for user=${tokenPayload.discordId} tokenRetries=${tokenPayload.retries}`);
+                    await interaction.update({ content: 'You have reached the retry limit for this encounter. Try again later.', components: [] });
+                    // delete token if present
+                    try { deleteToken && deleteToken(originalTransient); } catch (e) {}
+                    break;
+                }
+
                 const victory = morganFightMiniGame(this.player);
                 console.info(`RomanceDawn: fight_morgan result=${victory}`);
                 if (victory) {
@@ -268,17 +281,33 @@ class RomanceDawn extends BaseQuest {
                         components: []
                     });
                 } else {
-                    // Persist current state so the "Try Again" button routes back to the correct quest instance
+                    // Persist current state so the "Try Again" flow has a baseline
                     if (this.player) {
                         this.player.activeQuestInstance = { state: this.state, currentStep: this.currentStep, custom: this.custom };
                         try { if (typeof this.player.save === 'function') await this.player.save(); } catch (e) { console.error('Failed to save player after Morgan defeat', e); }
                     }
+
+                    // Create or rotate a transient token which stores retry count and minimal instance reference
+                    let newToken;
+                    if (tokenPayload) {
+                        // Increment existing token's retry count
+                        const newPayload = Object.assign({}, tokenPayload, { retries: (tokenPayload.retries || 0) + 1 });
+                        // delete old token from store
+                        try { deleteToken && deleteToken(originalTransient); } catch (e) {}
+                        newToken = generateToken(newPayload);
+                        writeLog('interactions.log', `Rotated retry token for user=${newPayload.discordId} newRetries=${newPayload.retries} token=${newToken}`);
+                    } else {
+                        const createdTokenPayload = { discordId: this.player?.discordId || this.player?.id || null, questId: this.id, currentStep: this.currentStep, retries: 1 };
+                        newToken = generateToken(createdTokenPayload);
+                        writeLog('interactions.log', `Generated retry token for fight_morgan user=${createdTokenPayload.discordId} token=${newToken}`);
+                    }
+
                     await interaction.update({
                         content: "You were defeated by Morgan. Try again!",
                         components: [
                             new ActionRowBuilder().addComponents(
                                 new ButtonBuilder()
-                                    .setCustomId('fight_morgan')
+                                    .setCustomId(`fight_morgan::${newToken}`)
                                     .setLabel('Try Again')
                                     .setStyle(ButtonStyle.Danger)
                             )

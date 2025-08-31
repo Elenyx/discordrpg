@@ -4,6 +4,8 @@ const fs = require('fs');
 const path = require('path');
 const { sequelize, Player } = require('./database');
 const questManager = require('./src/quests/QuestManager');
+const { consumeToken } = require('./src/utils/tokenStore');
+const { writeLog } = require('./src/utils/fileLogger');
 
 const client = new Client({
   intents: [
@@ -61,8 +63,21 @@ client.on('interactionCreate', async interaction => {
     // Component interactions (buttons / select menus) -> route to active quest if any
     if ((interaction.isButton && interaction.isButton()) || (interaction.isStringSelectMenu && interaction.isStringSelectMenu())) {
       // Diagnostic info for debugging stuck interactions
-      const incomingCustomId = interaction.customId || (interaction.values && interaction.values[0]) || null;
-      console.info(`Component interaction received: user=${interaction.user.id} customId=${incomingCustomId} guild=${interaction.guildId} channel=${interaction.channelId} message=${interaction.message?.id}`);
+      let incomingCustomId = interaction.customId || (interaction.values && interaction.values[0]) || null;
+      // customId may be extended with a transient token: e.g. "fight_morgan::abc123"
+      let transientToken = null;
+      if (incomingCustomId && incomingCustomId.includes('::')) {
+        const parts = incomingCustomId.split('::');
+        incomingCustomId = parts[0];
+        transientToken = parts[1];
+      }
+      const tokenPayload = transientToken ? consumeToken(transientToken) : null;
+      if (tokenPayload) {
+        interaction.tokenPayload = tokenPayload;
+        interaction.transientToken = transientToken;
+      }
+  console.info(`Component interaction received: user=${interaction.user.id} customId=${incomingCustomId} token=${transientToken} guild=${interaction.guildId} channel=${interaction.channelId} message=${interaction.message?.id}`);
+  writeLog('interactions.log', `user=${interaction.user.id} customId=${incomingCustomId} token=${transientToken} guild=${interaction.guildId} channel=${interaction.channelId} message=${interaction.message?.id}`);
       // Try to load player record by Discord ID
       let player = null;
       try {
@@ -75,13 +90,16 @@ client.on('interactionCreate', async interaction => {
 
       if (!player) {
         // No DB-backed player found; log details to help diagnose why
-        console.warn('No player record found for interaction', {
+        const warnPayload = {
           discordId: interaction.user.id,
           customId: incomingCustomId,
+          tokenPayload: tokenPayload || null,
           guildId: interaction.guildId,
           channelId: interaction.channelId,
           messageId: interaction.message?.id,
-        });
+        };
+        console.warn('No player record found for interaction', warnPayload);
+        writeLog('interactions.log', `NO_PLAYER ${JSON.stringify(warnPayload)}`);
 
         // Inform user how to start a quest (ephemeral reply)
         try {
