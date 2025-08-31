@@ -1,7 +1,7 @@
 const { SlashCommandBuilder } = require('discord.js');
 
 // V2 component helpers
-function buildSectionWithSelect({ title, description, selectId, options, step }) {
+function buildStepComponents({ title, description, selectId, options, step }) {
   return [
     {
       type: 9, // Section
@@ -10,6 +10,11 @@ function buildSectionWithSelect({ title, description, selectId, options, step })
           type: 10, // Text Display
           content: `**Step ${step}: ${title}**\n${description}`,
         },
+      ],
+    },
+    {
+      type: 1, // Action Row
+      components: [
         {
           type: 3, // String Select
           custom_id: selectId,
@@ -97,7 +102,7 @@ module.exports = {
     // Step 1: Race selection (Section + String Select)
     await interaction.reply({
       content: null,
-      components: buildSectionWithSelect({
+      components: buildStepComponents({
         title: 'Race',
         description: 'Choose your character\'s race. Each race has unique traits!',
         selectId: 'select_race',
@@ -122,7 +127,7 @@ module.exports = {
     // Step 2: Origin selection
     await interaction.followUp({
       content: null,
-      components: buildSectionWithSelect({
+      components: buildStepComponents({
         title: 'Origin',
         description: 'Where do you hail from? Each sea has its own story.',
         selectId: 'select_origin',
@@ -147,7 +152,7 @@ module.exports = {
     // Step 3: Dream selection
     await interaction.followUp({
       content: null,
-      components: buildSectionWithSelect({
+      components: buildStepComponents({
         title: 'Dream',
         description: 'What is your ultimate goal? Your dream shapes your journey.',
         selectId: 'select_dream',
