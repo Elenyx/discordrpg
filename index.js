@@ -62,6 +62,17 @@ client.on('interactionCreate', async interaction => {
 
     // Component interactions (buttons / select menus) -> route to active quest if any
     if ((interaction.isButton && interaction.isButton()) || (interaction.isStringSelectMenu && interaction.isStringSelectMenu())) {
+      // If this interaction's message was created as a reply to a slash command, assume
+      // the originating command (or its collector) should handle it and skip global routing.
+      // This avoids consuming interactions that are part of ephemeral command flows like `/start`.
+      try {
+        if (interaction.message && interaction.message.interaction && interaction.message.interaction.commandName) {
+          console.info('Component interaction originates from command', interaction.message.interaction.commandName, '- skipping global handler');
+          return;
+        }
+      } catch (e) {
+        // Non-fatal: continue to global handling if we can't inspect message.interaction
+      }
       // Diagnostic info for debugging stuck interactions
       let incomingCustomId = interaction.customId || (interaction.values && interaction.values[0]) || null;
       // customId may be extended with a transient token: e.g. "fight_morgan::abc123"

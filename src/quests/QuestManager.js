@@ -1,6 +1,8 @@
 const RomanceDawn = require('./EastBlueSaga/RomanceDawn');
 const BaseQuest = require('./BaseQuest');
 const RewardHandler = require('./utils/RewardHandler');
+const appConfig = require('../../config/config');
+const { ContainerBuilder, TextDisplayBuilder, SectionBuilder, SeparatorBuilder, SeparatorSpacingSize, AttachmentBuilder, MessageFlags } = require('discord.js');
 // Import DB models to access sequelize for transactions when available
 let db = null;
 try { db = require('../database/models'); } catch (e) { /* ignore if DB not configured in test env */ }
@@ -52,9 +54,17 @@ class QuestManager {
             case 'current':
                 const currentQuest = this.getCurrentQuest(player);
                 if (!currentQuest) {
-                    return await interaction.reply('You are not currently on any quest.');
+                    const noQuestContainer = new ContainerBuilder().addTextDisplayComponents(td => td.setContent('You are not currently on any quest.'));
+                    return await interaction.reply({ components: [noQuestContainer], flags: MessageFlags.IsComponentsV2 });
                 }
-                return await interaction.reply(`Current Quest: ${currentQuest.name}\nProgress: ${currentQuest.currentStep}/${currentQuest.steps.length}`);
+
+                const progressContainer = new ContainerBuilder()
+                    .setAccentColor(0x90EE90)
+                    .addTextDisplayComponents(
+                        td => td.setContent(`**${currentQuest.name}**`),
+                        td => td.setContent(`Progress: ${currentQuest.currentStep}/${currentQuest.steps.length}`)
+                    );
+                return await interaction.reply({ components: [progressContainer], flags: MessageFlags.IsComponentsV2 });
 
             case 'accept':
                 if (player.activeQuest) {
@@ -73,10 +83,16 @@ class QuestManager {
                 // persist to DB if player is a Sequelize model
                 try { if (typeof player.save === 'function') await player.save(); } catch (e) { /* ignore save errors in non-DB tests */ }
 
-                await interaction.reply({
-                    content: `Quest started: ${newQuest.name}\n${startMessage.content}`,
-                    components: startMessage.components
-                });
+                // Convert start message into a Container; reuse any components the quest returned for interactivity
+                const startContainer = new ContainerBuilder()
+                    .setAccentColor(0x8EC5FF)
+                    .addTextDisplayComponents(
+                        td => td.setContent(`📝 **Quest Started: ${newQuest.name}**`),
+                        td => td.setContent(startMessage.content)
+                    );
+
+                // If the quest provided action components, send them as action rows (kept in components)
+                await interaction.reply({ components: [startContainer, ...(startMessage.components || [])], flags: MessageFlags.IsComponentsV2 });
                 break;
 
             case 'complete':
@@ -88,14 +104,9 @@ class QuestManager {
                 // Use DB transaction if available
                 const runCompletion = async (t) => {
                     const completion = await quest.complete();
-                    // Apply rewards via RewardHandler (handles different reward types)
-                    try {
-                        RewardHandler.giveRewards(player, completion.rewards);
-                    } catch (e) {
-                        if (completion.rewards.berries) player.berries = (player.berries || 0) + completion.rewards.berries;
-                        if (completion.rewards.exp) player.exp = (player.exp || 0) + completion.rewards.exp;
-                        if (completion.rewards.items) player.inventory = (player.inventory || []).concat(completion.rewards.items);
-                    }
+
+                    // Apply rewards via RewardHandler which returns a result object including levelUp
+                    const rewardResult = RewardHandler.giveRewards(player, completion.rewards);
 
                     // Clear quest fields
                     player.activeQuest = null;
@@ -107,17 +118,59 @@ class QuestManager {
                         await player.save({ transaction: t });
                     }
 
-                    return completion;
+                    return { completion, rewardResult };
                 };
 
                 try {
+                    let result;
                     if (db && db.sequelize && typeof db.sequelize.transaction === 'function') {
-                        const completion = await db.sequelize.transaction(async (t) => runCompletion(t));
-                        await interaction.reply(`Quest completed!\nRewards: ${completion.rewards.berries} berries, ${completion.rewards.exp} EXP, and: ${completion.rewards.items.join(', ')}`);
+                        result = await db.sequelize.transaction(async (t) => runCompletion(t));
                     } else {
-                        const completion = await runCompletion(null);
-                        await interaction.reply(`Quest completed!\nRewards: ${completion.rewards.berries} berries, ${completion.rewards.exp} EXP, and: ${completion.rewards.items.join(', ')}`);
+                        result = await runCompletion(null);
                     }
+
+                    // Build a Components V2 Container to show completion, rewards and level-up
+                    const { completion, rewardResult } = result;
+
+                    const container = new ContainerBuilder()
+                        .setAccentColor(0xFFD166)
+                        .addTextDisplayComponents(
+                            td => td.setContent(`🏁 **Quest Completed: ${quest.name}**`),
+                            td => td.setContent(`You completed the quest and received the following rewards:`)
+                        )
+                        .addSectionComponents(section => section
+                            .addTextDisplayComponents(
+                                td => td.setContent(`**Berries:** ${rewardResult.berries}`),
+                                td => td.setContent(`**EXP:** ${rewardResult.exp}`),
+                                td => td.setContent(`**Items:** ${rewardResult.items.length ? rewardResult.items.map(i => {
+                                    const icon = appConfig.itemIcons && appConfig.itemIcons[i] ? ` ${appConfig.itemIcons[i]}` : '';
+                                    return `${i}${icon}`;
+                                }).join(', ') : 'None'}`)
+                            )
+                        );
+
+                    // Add a small thumbnail accessory via a Section (supported on SectionBuilder)
+                    container.addSectionComponents(section => section.setThumbnailAccessory(thumbnail =>
+                        thumbnail.setURL('https://i.imgur.com/7bKXQ1N.png').setDescription('Quest Complete')
+                    ));
+
+                    if (rewardResult.allies && rewardResult.allies.length) {
+                        container.addSectionComponents(section => section
+                            .addTextDisplayComponents(td => td.setContent(`**Allies Gained:** ${rewardResult.allies.join(', ')}`))
+                        );
+                    }
+
+                    if (rewardResult.levelUp) {
+                        container.addSeparatorComponents(separator => separator.setDivider(true).setSpacing(1));
+                        container.addSectionComponents(section => section
+                            .addTextDisplayComponents(
+                                td => td.setContent(`🎉 **Level Up!** You advanced from level ${rewardResult.levelUp.oldLevel} to ${rewardResult.levelUp.newLevel} (+${rewardResult.levelUp.levelsGained})`),
+                                td => td.setContent(`✨ New stats or rewards unlocked.`)
+                            )
+                        );
+                    }
+
+                    await interaction.reply({ components: [container], flags: MessageFlags.IsComponentsV2 });
                 } catch (error) {
                     await interaction.reply(`Cannot complete quest: ${error.message}`);
                 }
