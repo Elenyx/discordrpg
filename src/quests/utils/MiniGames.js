@@ -71,5 +71,15 @@ module.exports = {
     trainingMiniGame,
     sparMiniGame,
     fishingMiniGame,
-    turnBasedFight
+    turnBasedFight,
+    // New: small map puzzle mini-game
+    mapPuzzle
 };
+
+function mapPuzzle(player) {
+    // Simple puzzle: player must 'solve' by RNG influenced by charisma
+    const charisma = (player.stats && player.stats.charisma) || 0;
+    const baseChance = 0.3 + (charisma * 0.1);
+    const success = Math.random() < Math.min(0.95, baseChance);
+    return { success, reward: success ? { item: 'map_fragment', note: 'You completed the map puzzle and revealed a clue.' } : null };
+}

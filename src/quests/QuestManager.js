@@ -1,4 +1,3 @@
-const RomanceDawn = require('./EastBlueSaga/RomanceDawn');
 const BaseQuest = require('./BaseQuest');
 const RewardHandler = require('./utils/RewardHandler');
 const appConfig = require('../../config/config');
@@ -59,16 +58,71 @@ class QuestManager {
                     return await interaction.reply({ components: [noQuestContainer], flags: MessageFlags.IsComponentsV2 });
                 }
 
+                // If the quest is not in-progress, show a resume button and recent history
                 const progressContainer = new ContainerBuilder()
                     .setAccentColor(0x90EE90)
                     .addTextDisplayComponents(
                         td => td.setContent(`**${currentQuest.name}**`),
                         td => td.setContent(`Progress: ${currentQuest.currentStep}/${currentQuest.steps.length}`)
                     );
+
+                if (currentQuest.state && currentQuest.state !== 'in-progress') {
+                    // Build a small action row to resume or abandon
+                    const resumeRow = new ActionRowBuilder().addComponents(
+                        new ButtonBuilder().setCustomId('resume_quest').setLabel('Resume Quest').setStyle(1),
+                        new ButtonBuilder().setCustomId('abandon_quest').setLabel('Abandon Quest').setStyle(2)
+                    );
+
+                    // Show recent choices from custom.history if available
+                    let historyText = 'No history available.';
+                    try {
+                        if (currentQuest.custom && Array.isArray(currentQuest.custom.history) && currentQuest.custom.history.length) {
+                            historyText = currentQuest.custom.history.slice(-5).map(h => `- ${h.id} ${h.stats ? JSON.stringify(h.stats) : ''}`).join('\n');
+                        }
+                    } catch (e) { historyText = 'No history available.'; }
+
+                    progressContainer.addSectionComponents(section => section.addTextDisplayComponents(td => td.setContent(`Recent choices:\n${historyText}`)));
+                    return await interaction.reply({ components: [progressContainer, resumeRow], flags: MessageFlags.IsComponentsV2 });
+                }
+
+                progressContainer.addSectionComponents(section => section.addTextDisplayComponents(td => td.setContent('Quest is active. Use the quest message to continue.')));
                 return await interaction.reply({ components: [progressContainer], flags: MessageFlags.IsComponentsV2 });
 
             case 'accept':
+                // If player has an active quest record, try to resume if it's not in-progress
                 if (player.activeQuest) {
+                    // Load serialized instance if present
+                    const questClass = this.quests.get(player.activeQuest);
+                    if (player.activeQuestInstance && questClass && typeof questClass.fromJSON === 'function') {
+                        const inst = questClass.fromJSON(player.activeQuestInstance, player);
+                        if (inst.state && inst.state !== 'in-progress') {
+                            // Resume: start or progress depending on quest implementation
+                            // If quest defines start(), call it to move into in-progress
+                            try {
+                                if (typeof inst.start === 'function') {
+                                    await inst.start();
+                                }
+                                // persist new state
+                                player.activeQuest = player.activeQuest;
+                                player.activeQuestInstance = inst.toJSON ? inst.toJSON() : { state: inst.state, currentStep: inst.currentStep };
+                                if (typeof player.save === 'function') await player.save();
+                                // Show initial progress to the user
+                                const startMsg = await inst.progress();
+                                if (startMsg.components && startMsg.components.length && interaction.channel && typeof interaction.channel.send === 'function') {
+                                    await interaction.channel.send({ content: startMsg.content, components: startMsg.components });
+                                    if (!interaction.replied && !interaction.deferred) await interaction.reply({ content: 'Quest resumed.', ephemeral: true });
+                                } else {
+                                    const startContainer = new ContainerBuilder().addTextDisplayComponents(td => td.setContent(startMsg.content || 'Quest resumed.'));
+                                    await interaction.reply({ components: [startContainer], flags: MessageFlags.IsComponentsV2 });
+                                }
+                                return;
+                            } catch (e) {
+                                console.error('Failed to resume quest', e);
+                            }
+                        } else {
+                            return await interaction.reply(`You're already on a quest: ${player.activeQuest}`);
+                        }
+                    }
                     return await interaction.reply(`You're already on a quest: ${player.activeQuest}`);
                 }
 
@@ -207,8 +261,31 @@ class QuestManager {
     }
 }
 
-// Initialize and register quests
+// Initialize and register quests (auto-discover sagas and quests)
+const allQuests = require('./index');
 const questManager = new QuestManager();
-questManager.registerQuest(RomanceDawn);
+for (const sagaName of Object.keys(allQuests)) {
+    const saga = allQuests[sagaName] || {};
+    for (const key of Object.keys(saga)) {
+        const q = saga[key];
+        try {
+            // Some requires export an object with multiple exports — prefer a class named by id
+            const questClass = q && q.id ? q : (q && q.default) ? q.default : q;
+            if (questClass && (questClass.id || questClass.name)) {
+                questManager.registerQuest(questClass);
+            } else {
+                // If the module exported a collection, try to register nested exports
+                if (typeof questClass === 'object') {
+                    for (const k of Object.keys(questClass)) {
+                        const nested = questClass[k];
+                        if (nested && (nested.id || nested.name)) questManager.registerQuest(nested);
+                    }
+                }
+            }
+        } catch (e) {
+            console.warn('Failed to register quest', sagaName, key, e && e.message);
+        }
+    }
+}
 
 module.exports = questManager;

@@ -13,13 +13,13 @@ This document lists the current quest definitions, their step titles, available 
 - `src/quests/utils/RewardHandler.js` - handles giving rewards (used by `QuestManager`)
 - `src/quests/utils/QuestValidator.js` - quest validation utilities
 - `src/quests/utils/QuestDialogue.js` - dialog helpers for quests
-- `src/quests/EastBlueSaga/RomanceDawn.js` - Romance Dawn quest implementation
-- `src/quests/EastBlueSaga/RaceSpecificSteps.js` - race-specific extra steps for Romance Dawn
+ `src/quests/EastBlueSaga/RomanceDawn/index.js` - Romance Dawn quest implementation
+ **EastBlueSaga**
+  - `RomanceDawn` — `src/quests/EastBlueSaga/RomanceDawn/index.js`
+ The quest class is exported from `src/quests/EastBlueSaga/RomanceDawn/index.js` and registered in `src/quests/QuestManager.js`.
+ Links (quick)
 
-## Available sagas and quests
-
-- **EastBlueSaga**
-  - `RomanceDawn` — `src/quests/EastBlueSaga/RomanceDawn.js`
+ RomanceDawn: `src/quests/EastBlueSaga/RomanceDawn/index.js`
 
 - **AlabastaSaga**
   - (no `.js` quest files present)

@@ -1,0 +1,47 @@
+{
+  "search_barrel": {
+    "message": "You rummage through the barrel and find some useful supplies.",
+    "loot": [
+      { "id": "small_berry", "name": "Small Berry", "qty": 3, "chance": 0.6 },
+      { "id": "old_pendant", "name": "Old Pendant", "qty": 1, "chance": 0.25 },
+      { "id": "map_fragment", "name": "Map Fragment", "qty": 1, "chance": 0.15 }
+    ],
+    "stats": { "berries": 3, "charisma": 0, "power": 0 }
+  },
+
+  "check_survivors": {
+    "message": "You help a small survivor and gain goodwill.",
+    "loot": [],
+    "stats": { "charisma": 1, "power": 0, "berries": 0 }
+  },
+
+  "offer_food": {
+    "message": "Luffy appreciates your kindness and warms up to you.",
+    "loot": [],
+    "stats": { "charisma": 1 }
+  },
+
+  "flatter_luffy": {
+    "message": "Your flattery works — Luffy is flattered and agrees to a trial spar.",
+    "loot": [],
+    "stats": { "charisma": 2, "power": 2 }
+  },
+
+  "join_crew": {
+    "message": "You join forces with Luffy — your courage is rewarded.",
+    "loot": [],
+    "stats": { "power": 5, "charisma": 2 }
+  },
+
+  "decline_crew": {
+    "message": "You decline politely, but the encounter still shapes your journey.",
+    "loot": [],
+    "stats": { "charisma": -1 }
+  },
+
+  "distract_morgan": {
+    "message": "Your distraction works briefly; the marines look away.",
+    "loot": [],
+    "stats": { "charisma": 1 }
+  }
+}
