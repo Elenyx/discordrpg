@@ -1,6 +1,6 @@
 // RomanceDawn.js
 const BaseQuest = require('../../BaseQuest');
-const { ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder } = require('discord.js');
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, ContainerBuilder, TextDisplayBuilder, SeparatorBuilder, SeparatorSpacingSize, MessageFlags } = require('discord.js');
 const raceSteps = require('../RaceSpecificSteps');
 const MiniGames = require('../../utils/MiniGames');
 const CONSEQUENCES = require('../consequences.json');
@@ -43,28 +43,28 @@ class RomanceDawn extends BaseQuest {
         const baseSteps = [
             {
                 title: 'The Barrel Boy',
-                description: 'You spot a mysterious barrel floating in the ocean. What do you do?',
+                description: 'The morning sun glints off a lone barrel bobbing against the swell — something about its slow, languid roll feels wrong. You can smell salt, old rope, and the faint tang of seaweed. Objective: decide how to approach the floating object without endangering yourself or your crew.',
                 actions: [
-                    { type: 'button', label: 'Investigate the barrel', customId: 'investigate_barrel' },
-                    { type: 'button', label: 'Ignore it and keep sailing', customId: 'ignore_barrel' },
-                    { type: 'button', label: 'Search the barrel for supplies', customId: 'search_barrel' },
-                    { type: 'button', label: 'Check if someone needs help', customId: 'check_survivors' }
+                    { type: 'button', label: '🔍 Investigate the barrel', customId: 'investigate_barrel' },
+                    { type: 'button', label: '⛵ Ignore it and keep sailing', customId: 'ignore_barrel' },
+                    { type: 'button', label: '📦 Search the barrel for supplies', customId: 'search_barrel' },
+                    { type: 'button', label: '🆘 Check if someone needs help', customId: 'check_survivors' }
                 ]
             },
             {
                 title: 'Meeting Luffy',
-                description: 'A boy with stretchy powers emerges from the barrel! He introduces himself as Monkey D. Luffy.',
+                description: 'A wiry boy tumbles out of the barrel with a grin that stretches his whole face. His limbs feel oddly elastic, and he speaks with a simple, burning certainty about the sea. Objective: decide whether you offer him help and a place at your table, or learn more about who — and what — he is.',
                 actions: [
-                    { type: 'button', label: 'Offer him food', customId: 'offer_food' },
-                    { type: 'button', label: 'Ask who he is', customId: 'ask_identity' }
+                    { type: 'button', label: '🍖 Offer him food', customId: 'offer_food' },
+                    { type: 'button', label: '❓ Ask who he is', customId: 'ask_identity' }
                 ]
             },
             {
                 title: "Luffy's Dream",
-                description: "Luffy says he's looking for a crew to become King of the Pirates!",
+                description: "He speaks of vast blue horizons and a single, stubborn dream: to be Pirate King. His eyes shine with possibility. Objective: weigh the risk of traveling with a stranger against the rewards of an extraordinary ally.",
                 actions: [
-                    { type: 'button', label: 'Join his crew', customId: 'join_crew' },
-                    { type: 'button', label: 'Politely decline', customId: 'decline_crew' }
+                    { type: 'button', label: '⚓️ Join his crew', customId: 'join_crew' },
+                    { type: 'button', label: '🙅 Politely decline', customId: 'decline_crew' }
                 ]
             }
         ];
@@ -122,15 +122,55 @@ class RomanceDawn extends BaseQuest {
         if (this.state !== 'in-progress') throw new Error('Quest is not in progress');
         const currentStep = this.steps[this.currentStep - 1];
         if (!currentStep) return await this.complete();
+
+        // Allow dynamic actions based on player state
         const dynamicStep = Object.assign({}, currentStep);
         const playerCharisma = (this.player && this.player.stats && this.player.stats.charisma) || 0;
         if (currentStep.title === "Luffy's Dream" && playerCharisma >= 2) dynamicStep.actions = (dynamicStep.actions || []).concat([{ type: 'button', label: 'Flatter Luffy', customId: 'flatter_luffy' }]);
-        const components = [];
-        for (const action of dynamicStep.actions) {
-            if (action.type === 'button') components.push(new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(action.customId).setLabel(action.label).setStyle(ButtonStyle.Primary)));
-            else if (action.type === 'select') components.push(new ActionRowBuilder().addComponents(new StringSelectMenuBuilder().setCustomId(action.customId).setPlaceholder(action.label).addOptions(action.options.map(opt => ({ label: opt.label, value: opt.value })) )));
+
+        // Build a rich Components V2 Container that presents a descriptive journey UI.
+        // Use TextDisplay components for large, markdown-capable narrative and Section/Action rows
+        // for interactive choices. This keeps the UI immersive while preserving classic
+        // action-row interactivity as a fallback.
+        try {
+            const container = new ContainerBuilder()
+                .setAccentColor(0x8EC5FF)
+                .addTextDisplayComponents(
+                    td => td.setContent(`**${currentStep.title}**`),
+                    td => td.setContent(currentStep.description)
+                )
+                .addSeparatorComponents(separator => separator.setDivider(false).setSpacing(SeparatorSpacingSize.Small));
+
+            // Group action buttons/selects into one or more action rows inside the container
+            if (Array.isArray(dynamicStep.actions) && dynamicStep.actions.length) {
+                // Collect up to 5 components per row where suitable (discord limits apply)
+                const rowComponents = [];
+                for (const action of dynamicStep.actions) {
+                    if (action.type === 'button') {
+                        rowComponents.push(new ButtonBuilder().setCustomId(action.customId).setLabel(action.label).setStyle(ButtonStyle.Primary));
+                    } else if (action.type === 'select') {
+                        rowComponents.push(new StringSelectMenuBuilder().setCustomId(action.customId).setPlaceholder(action.label).addOptions(action.options.map(opt => ({ label: opt.label, value: opt.value }))));
+                    }
+                }
+
+                // Add the collected components as a single action-row in the container. If the
+                // number of items is large, callers can choose to split them across multiple rows.
+                container.addActionRowComponents(actionRow => actionRow.setComponents(...rowComponents));
+            }
+
+            const content = `**${currentStep.title}**\n${currentStep.description}`;
+            return { content, components: [container], flags: MessageFlags.IsComponentsV2 };
+        } catch (err) {
+            // If ContainerBuilder fails due to environment or validation, fall back to classic
+            // action-row based rendering so behavior remains unchanged.
+            console.warn('RomanceDawn.progress: ContainerBuilder failed, falling back to classic components', err && err.message ? err.message : err);
+            const components = [];
+            for (const action of dynamicStep.actions || []) {
+                if (action.type === 'button') components.push(new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(action.customId).setLabel(action.label).setStyle(ButtonStyle.Primary)));
+                else if (action.type === 'select') components.push(new ActionRowBuilder().addComponents(new StringSelectMenuBuilder().setCustomId(action.customId).setPlaceholder(action.label).addOptions(action.options.map(opt => ({ label: opt.label, value: opt.value })) )));
+            }
+            return { content: `**${currentStep.title}**\n${currentStep.description}`, components };
         }
-        return { content: `**${currentStep.title}**\n${currentStep.description}`, components };
     }
 
     async safeUpdate(interaction, payload) {
