@@ -6,6 +6,7 @@ const { sequelize, Player } = require('./database');
 const questManager = require('./src/quests/QuestManager');
 const { consumeToken } = require('./src/utils/tokenStore');
 const { writeLog } = require('./src/utils/fileLogger');
+const logger = require('./src/utils/logger');
 
 const client = new Client({
   intents: [
@@ -14,6 +15,9 @@ const client = new Client({
     GatewayIntentBits.MessageContent,
   ],
 });
+
+// Initialize logger with the client once we have it available
+try { logger.init(client); } catch (e) { console.error('Failed to init logger', e); }
 
 // Load events
 const eventsPath = path.join(__dirname, 'src', 'events');
@@ -112,15 +116,32 @@ client.on('interactionCreate', async interaction => {
         console.warn('No player record found for interaction', warnPayload);
         writeLog('interactions.log', `NO_PLAYER ${JSON.stringify(warnPayload)}`);
 
-        // Inform user how to start a quest (ephemeral reply)
-        try {
-          if (!interaction.replied && !interaction.deferred) {
-            await interaction.reply({ content: 'No player profile found. Use the quest commands to start (e.g. /quest accept).', ephemeral: true });
-          } else if (interaction.deferred) {
-            await interaction.editReply({ content: 'No player profile found. Use the quest commands to start (e.g. /quest accept).' });
-          }
-        } catch (e) { console.error(e); }
-        return;
+        // If there is a valid transient token payload, construct a transient player
+        // object so quest handlers can operate for the duration of the interaction.
+        if (tokenPayload) {
+          console.info('Using transient token to construct temporary player for interaction', { discordId: interaction.user.id, token: transientToken });
+          player = {
+            id: null,
+            discordId: tokenPayload.discordId || interaction.user.id,
+            race: tokenPayload.race || 'Human',
+            origin: tokenPayload.origin || null,
+            dream: tokenPayload.dream || null,
+            stats: tokenPayload.stats || { hp: 10, atk: 5, def: 5 },
+            activeQuest: tokenPayload.questId || null,
+            activeQuestInstance: tokenPayload.activeQuestInstance || null,
+            save: async function () { /* transient no-op */ },
+          };
+        } else {
+          // Inform user how to start a quest (ephemeral reply)
+          try {
+            if (!interaction.replied && !interaction.deferred) {
+              await interaction.reply({ content: 'No player profile found. Use the quest commands to start (e.g. /quest accept).', ephemeral: true });
+            } else if (interaction.deferred) {
+              await interaction.editReply({ content: 'No player profile found. Use the quest commands to start (e.g. /quest accept).' });
+            }
+          } catch (e) { console.error(e); }
+          return;
+        }
       }
 
       // Restore current quest instance for player and forward the interaction
@@ -170,3 +191,13 @@ sequelize.sync()
     console.error('Failed to sync database:', err);
     process.exit(1);
   });
+
+process.on('unhandledRejection', async (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  try { await logger.logError('Unhandled Rejection', reason, { promise: String(promise) }); } catch (e) { console.error('Logger failed', e); }
+});
+
+process.on('uncaughtException', async (error) => {
+  console.error('Uncaught Exception:', error);
+  try { await logger.logError('Uncaught Exception', error); } catch (e) { console.error('Logger failed', e); }
+});

@@ -67,8 +67,8 @@ module.exports = {
     const discordId = targetUser.id;
     
     try {
-      // Fetch player data
-      const player = await Player.findOne({ where: { discord_id: discordId } });
+  // Fetch player data
+  const player = await Player.findOne({ where: { discordId: discordId } });
       
       if (!player) {
         const noCharacterEmbed = new EmbedBuilder()

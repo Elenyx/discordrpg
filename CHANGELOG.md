@@ -16,6 +16,15 @@ All notable changes to this project will be documented in this file. This projec
  - Added file logging for interactions (`logs/interactions.log`) via `src/utils/fileLogger.js`.
  - Added `quest-debug` slash command for developers to dump a player's quest payload (ephemeral).
  - Improved diagnostic logs when component interactions arrive to help debug stuck buttons.
+ - Added centralized in-Discord error/success logger with configurable channel (`src/utils/logger.js`).
+ - Added `/admin` command for administrators to set/get/test the error log channel (`src/commands/admin.js`).
+ - Added `settings` DB model to persist error log channel (`src/database/models/setting.js`).
+ - Implemented transient-token propagation from `/start` components to allow global handlers to authenticate command-originated interactions.
+ - Added `safeUpdate` fallbacks for quest interaction updates to avoid Unknown interaction errors when interactions expire (`src/quests/*`).
+ - Added an integration test for `/start` (Jest) and updated test harness (`test/start.integration.test.js`).
+ - Updated `index.js` to initialize logger and route unhandled rejections/uncaught exceptions to the logger.
+ - Fixed model attribute/column usage inconsistencies (use `discordId` model attribute in code).
+
 
 ## [1.0.0] - 2025-09-01
 

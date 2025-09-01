@@ -10,6 +10,7 @@ const {
   ActionRowBuilder, // This import is crucial
 } = require('discord.js');
 const { Player } = require('../../database');
+const { generateToken, deleteToken } = require('../utils/tokenStore');
 
 const races = [
   { label: 'Human', value: 'Human', description: 'Versatile and adaptable fighters' },
@@ -36,12 +37,12 @@ const dreams = [
 ];
 
 // Helper function to build Components V2 container with text and select menu
-function buildStepContainer(step, title, description, selectId, options) {
+function buildStepContainer(step, title, description, selectId, options, token) {
   const textDisplay = new TextDisplayBuilder()
     .setContent(`**Step ${step}: ${title}**\n${description}`);
 
   const selectMenu = new StringSelectMenuBuilder()
-    .setCustomId(selectId)
+  .setCustomId(token ? `${selectId}::${token}` : selectId)
     .setPlaceholder(`Choose your ${title.toLowerCase()}`)
     .addOptions(options);
 
@@ -103,7 +104,7 @@ module.exports = {
 
     try {
       // Check if player already exists
-      const existing = await Player.findOne({ where: { discord_id: discordId } });
+  const existing = await Player.findOne({ where: { discordId: discordId } });
       if (existing) {
         // Using a V2 component for the reply to maintain consistency
         const alreadyExistsContainer = buildTextContainer(
@@ -116,13 +117,18 @@ module.exports = {
         });
       }
 
+      // Create a transient token to attach to component customIds so other handlers
+      // can authenticate these interactions if needed.
+      const transientToken = generateToken({ discordId });
+
       // Step 1: Race selection
       const raceContainer = buildStepContainer(
         1,
         'Race Selection',
         'Choose your character\'s race. Each race has unique traits and abilities!',
         'select_race',
-        races
+        races,
+        transientToken
       );
 
       await interaction.reply({
@@ -131,7 +137,7 @@ module.exports = {
       });
 
       const raceSelect = await interaction.channel.awaitMessageComponent({
-        filter: i => i.user.id === discordId && i.customId === 'select_race',
+        filter: i => i.user.id === discordId && i.customId && i.customId.startsWith('select_race'),
         time: 60000,
       });
       const race = raceSelect.values[0];
@@ -143,6 +149,8 @@ module.exports = {
         'Where do you hail from? Each sea shapes your character\'s background.',
         'select_origin',
         origins
+      ,
+        transientToken
       );
 
       await raceSelect.update({
@@ -151,7 +159,7 @@ module.exports = {
       });
 
       const originSelect = await interaction.channel.awaitMessageComponent({
-        filter: i => i.user.id === discordId && i.customId === 'select_origin',
+        filter: i => i.user.id === discordId && i.customId && i.customId.startsWith('select_origin'),
         time: 60000,
       });
       const origin = originSelect.values[0];
@@ -163,6 +171,8 @@ module.exports = {
         'What is your ultimate goal? Your dream will drive your journey across the seas!',
         'select_dream',
         dreams
+      ,
+        transientToken
       );
 
       await originSelect.update({
@@ -171,13 +181,13 @@ module.exports = {
       });
 
       const dreamSelect = await interaction.channel.awaitMessageComponent({
-        filter: i => i.user.id === discordId && i.customId === 'select_dream',
+        filter: i => i.user.id === discordId && i.customId && i.customId.startsWith('select_dream'),
         time: 60000,
       });
       const dream = dreamSelect.values[0];
 
       // Step 4: Summary and confirmation
-      const summaryContainer = buildSummaryContainer(race, origin, dream);
+  const summaryContainer = buildSummaryContainer(race, origin, dream, transientToken);
 
       await dreamSelect.update({
         components: [summaryContainer],
@@ -185,11 +195,11 @@ module.exports = {
       });
 
       const confirm = await interaction.channel.awaitMessageComponent({
-        filter: i => i.user.id === discordId && (i.customId === 'confirm_start' || i.customId === 'cancel_start'),
+        filter: i => i.user.id === discordId && i.customId && (i.customId.startsWith('confirm_start') || i.customId.startsWith('cancel_start')),
         time: 60000,
       });
 
-      if (confirm.customId === 'cancel_start') {
+  if (confirm.customId && confirm.customId.startsWith('cancel_start')) {
         const cancelContainer = buildTextContainer(
           '⛵ **Character creation cancelled.**\nYou can start again anytime with `/start`!',
           0x95a5a6
@@ -198,12 +208,13 @@ module.exports = {
           components: [cancelContainer],
           flags: MessageFlags.IsComponentsV2
         });
+        try { deleteToken && deleteToken(transientToken); } catch (e) {}
         return;
       }
 
       // Create player in database
       await Player.create({
-        discord_id: discordId,
+        discordId: discordId,
         race,
         origin,
         dream,
@@ -221,6 +232,7 @@ module.exports = {
         components: [successContainer],
         flags: MessageFlags.IsComponentsV2
       });
+      try { deleteToken && deleteToken(transientToken); } catch (e) {}
 
     } catch (error) {
       console.error('Error in start command:', error);

@@ -211,6 +211,31 @@ class RomanceDawn extends BaseQuest {
         };
     }
 
+    // Safe update wrapper: attempt interaction.update, fall back to reply/editReply
+    async safeUpdate(interaction, payload) {
+        try {
+            if (interaction && typeof interaction.update === 'function') {
+                await interaction.update(payload);
+                return;
+            }
+        } catch (err) {
+            // If the interaction is unknown/expired, try reply/edit as a fallback
+            console.warn('safeUpdate: interaction.update failed, attempting fallback:', err && err.code ? `${err.code}` : err);
+            try {
+                if (!interaction.replied && !interaction.deferred) {
+                    await interaction.reply(Object.assign({}, payload, { ephemeral: true }));
+                } else if (interaction.deferred) {
+                    await interaction.editReply(payload);
+                } else if (interaction.replied) {
+                    // Can't edit a reply easily in every case; try to follow up
+                    await interaction.followUp(Object.assign({}, payload, { ephemeral: true }));
+                }
+            } catch (e) {
+                console.error('safeUpdate: fallback failed:', e);
+            }
+        }
+    }
+
     async handleInteraction(interaction) {
         const customId = interaction.customId;
 
@@ -222,11 +247,11 @@ class RomanceDawn extends BaseQuest {
                     this.player.activeQuestInstance = { state: this.state, currentStep: this.currentStep, custom: this.custom };
                     try { if (typeof this.player.save === 'function') await this.player.save(); } catch (e) {}
                 }
-                await interaction.update(await this.progress());
+                await this.safeUpdate(interaction, await this.progress());
                 break;
 
             case 'ignore_barrel':
-                await interaction.update({
+                await this.safeUpdate(interaction, {
                     content: "You decided to ignore the barrel. Maybe you'll meet Luffy another time.",
                     components: []
                 });
@@ -240,9 +265,9 @@ class RomanceDawn extends BaseQuest {
                         this.player.activeQuestInstance = { state: this.state, currentStep: this.currentStep, custom: this.custom };
                         try { if (typeof this.player.save === 'function') await this.player.save(); } catch (e) {}
                     }
-                    await interaction.update(await this.progress());
+                    await this.safeUpdate(interaction, await this.progress());
                 } else {
-                    await interaction.update({
+                    await this.safeUpdate(interaction, {
                         content: "You decided not to free Zoro. The story continues differently...",
                         components: []
                     });
@@ -262,7 +287,7 @@ class RomanceDawn extends BaseQuest {
                 const originalTransient = interaction.transientToken || null;
                 if (tokenPayload && tokenPayload.retries >= 3) {
                     writeLog('interactions.log', `Retry limit reached for user=${tokenPayload.discordId} tokenRetries=${tokenPayload.retries}`);
-                    await interaction.update({ content: 'You have reached the retry limit for this encounter. Try again later.', components: [] });
+                    await this.safeUpdate(interaction, { content: 'You have reached the retry limit for this encounter. Try again later.', components: [] });
                     // delete token if present
                     try { deleteToken && deleteToken(originalTransient); } catch (e) {}
                     break;
@@ -276,7 +301,7 @@ class RomanceDawn extends BaseQuest {
                         this.player.activeQuestInstance = { state: this.state, currentStep: this.currentStep, custom: this.custom };
                         try { if (typeof this.player.save === 'function') await this.player.save(); } catch (e) {}
                     }
-                    await interaction.update({
+                    await this.safeUpdate(interaction, {
                         content: "You defeated Captain Morgan! Zoro is now free and joins your crew!",
                         components: []
                     });
@@ -302,7 +327,7 @@ class RomanceDawn extends BaseQuest {
                         writeLog('interactions.log', `Generated retry token for fight_morgan user=${createdTokenPayload.discordId} token=${newToken}`);
                     }
 
-                    await interaction.update({
+                    await this.safeUpdate(interaction, {
                         content: "You were defeated by Morgan. Try again!",
                         components: [
                             new ActionRowBuilder().addComponents(
@@ -322,7 +347,7 @@ class RomanceDawn extends BaseQuest {
                     this.player.activeQuestInstance = { state: this.state, currentStep: this.currentStep, custom: this.custom };
                     try { if (typeof this.player.save === 'function') await this.player.save(); } catch (e) {}
                 }
-                await interaction.update(await this.progress());
+                await this.safeUpdate(interaction, await this.progress());
         }
     }
 }
