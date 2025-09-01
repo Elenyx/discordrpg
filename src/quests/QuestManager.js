@@ -3,6 +3,7 @@ const BaseQuest = require('./BaseQuest');
 const RewardHandler = require('./utils/RewardHandler');
 const appConfig = require('../../config/config');
 const { ContainerBuilder, TextDisplayBuilder, SectionBuilder, SeparatorBuilder, SeparatorSpacingSize, AttachmentBuilder, MessageFlags } = require('discord.js');
+const { writeLog } = require('../utils/fileLogger');
 // Import DB models to access sequelize for transactions when available
 let db = null;
 try { db = require('../database/models'); } catch (e) { /* ignore if DB not configured in test env */ }
@@ -91,39 +92,34 @@ class QuestManager {
                         td => td.setContent(startMessage.content)
                     );
 
-                // If the quest provided action components, attach them to the Container so Components V2
-                // message only contains display components (and the action rows are nested inside).
-                if (startMessage.components && Array.isArray(startMessage.components) && startMessage.components.length) {
-                    for (const ar of startMessage.components) {
-                        try {
-                            startContainer.addActionRowComponents(ar);
-                        } catch (e) {
-                            // Log and continue — still send the container without the failing action row
-                            console.error('Failed to attach action row to start container', e);
-                        }
-                    }
-                }
-
-                // Send the interactive quest start message as a regular channel message so it is
-                // not attached to the originating slash command. If the message has `message.interaction`
-                // set, the global handler intentionally skips routing, which prevents quests from
-                // receiving component interactions. Sending via channel ensures global routing will
-                // receive the component events.
+                // If the quest provided action components (ActionRowBuilder instances), send a
+                // classic message with `content` and `components` (action rows). Classic component
+                // messages are universally supported and produce standard button/select interactions
+                // that the global handler can route.
                 try {
-                    if (interaction.channel && typeof interaction.channel.send === 'function') {
-                        await interaction.channel.send({ components: [startContainer], flags: MessageFlags.IsComponentsV2 });
-                        // Acknowledge the user's command with an ephemeral reply so we satisfy Discord's
-                        // interaction response requirement without owning the visible components message.
+                    if (startMessage.components && Array.isArray(startMessage.components) && startMessage.components.length && interaction.channel && typeof interaction.channel.send === 'function') {
+                        const sentMsg = await interaction.channel.send({ content: startMessage.content, components: startMessage.components });
+                        console.info('Sent quest start classic message', { user: interaction.user?.id, messageId: sentMsg?.id, messageInteractionCommand: sentMsg?.interaction?.commandName });
+                        try { writeLog('interactions.log', `SENT_QUEST_CLASSIC user=${interaction.user?.id} message=${sentMsg?.id} interactionCommand=${sentMsg?.interaction?.commandName || ''}`); } catch (e) { /* ignore logging errors */ }
                         if (!interaction.replied && !interaction.deferred) {
                             await interaction.reply({ content: 'Quest started.', ephemeral: true });
                         }
                     } else {
-                        // Fallback: if channel.send is unavailable, send as a reply (older behavior)
-                        await interaction.reply({ components: [startContainer], flags: MessageFlags.IsComponentsV2 });
+                        // If no classic components were provided, fallback to sending the Container V2 message
+                        // so text-only start messages still use the polished display components.
+                        if (interaction.channel && typeof interaction.channel.send === 'function') {
+                            const sentMsg = await interaction.channel.send({ components: [startContainer], flags: MessageFlags.IsComponentsV2 });
+                            try { writeLog('interactions.log', `SENT_QUEST_MESSAGE user=${interaction.user?.id} message=${sentMsg?.id}`); } catch (e) { /* ignore */ }
+                            if (!interaction.replied && !interaction.deferred) {
+                                await interaction.reply({ content: 'Quest started.', ephemeral: true });
+                            }
+                        } else {
+                            await interaction.reply({ components: [startContainer], flags: MessageFlags.IsComponentsV2 });
+                        }
                     }
                 } catch (e) {
-                    console.error('Failed to send start container to channel, falling back to reply', e);
-                    try { await interaction.reply({ components: [startContainer], flags: MessageFlags.IsComponentsV2 }); } catch (err) { console.error(err); }
+                    console.error('Failed to send quest start message', e);
+                    try { if (!interaction.replied && !interaction.deferred) await interaction.reply({ content: 'Failed to start quest.', ephemeral: true }); } catch (err) { console.error(err); }
                 }
                 break;
 
