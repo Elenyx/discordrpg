@@ -25,6 +25,13 @@ All notable changes to this project will be documented in this file. This projec
  - Updated `index.js` to initialize logger and route unhandled rejections/uncaught exceptions to the logger.
  - Fixed model attribute/column usage inconsistencies (use `discordId` model attribute in code).
 
+- Improved error logging for interactions and components:
+	- Global interaction routing now logs component failures and metadata to the configured error channel (`index.js`).
+	- Quest `safeUpdate` fallbacks and player-save failures now emit warnings to the error logger (`src/quests/*`).
+	- Slash command error handlers (`/start`, `/quest`) now log errors to the error channel with useful metadata.
+	- Added metadata fields to logs: userId, customId/command, transient token, guildId, channelId, messageId, playerId.
+	- Tests run and passed after logging additions.
+
 
 ## [1.0.0] - 2025-09-01
 
