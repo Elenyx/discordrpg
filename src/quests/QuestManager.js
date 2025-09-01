@@ -1,7 +1,7 @@
 const BaseQuest = require('./BaseQuest');
 const RewardHandler = require('./utils/RewardHandler');
 const appConfig = require('../../config/config');
-const { ContainerBuilder, TextDisplayBuilder, SectionBuilder, SeparatorBuilder, SeparatorSpacingSize, AttachmentBuilder, MessageFlags } = require('discord.js');
+const { ContainerBuilder, TextDisplayBuilder, SectionBuilder, SeparatorBuilder, SeparatorSpacingSize, AttachmentBuilder, MessageFlags, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { writeLog } = require('../utils/fileLogger');
 // Import DB models to access sequelize for transactions when available
 let db = null;
@@ -85,8 +85,23 @@ class QuestManager {
                     return await interaction.reply({ components: [progressContainer, resumeRow], flags: MessageFlags.IsComponentsV2 });
                 }
 
-                progressContainer.addSectionComponents(section => section.addTextDisplayComponents(td => td.setContent('Quest is active. Use the quest message to continue.')));
-                return await interaction.reply({ components: [progressContainer], flags: MessageFlags.IsComponentsV2 });
+                    // If the quest is in-progress, preview the next step to see if it has interactive components.
+                    let preview = null;
+                    try {
+                        if (typeof currentQuest.progress === 'function') preview = await currentQuest.progress();
+                    } catch (err) { preview = null; }
+
+                    // If the preview has no components, provide a resume/continue button so the player isn't stuck.
+                    if (preview && (!preview.components || preview.components.length === 0)) {
+                        const resumeRow = new ActionRowBuilder().addComponents(
+                            new ButtonBuilder().setCustomId('resume_quest').setLabel('Continue Quest').setStyle(ButtonStyle.Primary)
+                        );
+                        progressContainer.addSectionComponents(section => section.addTextDisplayComponents(td => td.setContent('Quest is active. Use the button below to continue.')));
+                        return await interaction.reply({ components: [progressContainer, resumeRow], flags: MessageFlags.IsComponentsV2 });
+                    }
+
+                    progressContainer.addSectionComponents(section => section.addTextDisplayComponents(td => td.setContent('Quest is active. Use the quest message to continue.')));
+                    return await interaction.reply({ components: [progressContainer], flags: MessageFlags.IsComponentsV2 });
 
             case 'accept':
                 // If player has an active quest record, try to resume if it's not in-progress
