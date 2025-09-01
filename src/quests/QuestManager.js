@@ -104,7 +104,27 @@ class QuestManager {
                     }
                 }
 
-                await interaction.reply({ components: [startContainer], flags: MessageFlags.IsComponentsV2 });
+                // Send the interactive quest start message as a regular channel message so it is
+                // not attached to the originating slash command. If the message has `message.interaction`
+                // set, the global handler intentionally skips routing, which prevents quests from
+                // receiving component interactions. Sending via channel ensures global routing will
+                // receive the component events.
+                try {
+                    if (interaction.channel && typeof interaction.channel.send === 'function') {
+                        await interaction.channel.send({ components: [startContainer], flags: MessageFlags.IsComponentsV2 });
+                        // Acknowledge the user's command with an ephemeral reply so we satisfy Discord's
+                        // interaction response requirement without owning the visible components message.
+                        if (!interaction.replied && !interaction.deferred) {
+                            await interaction.reply({ content: 'Quest started.', ephemeral: true });
+                        }
+                    } else {
+                        // Fallback: if channel.send is unavailable, send as a reply (older behavior)
+                        await interaction.reply({ components: [startContainer], flags: MessageFlags.IsComponentsV2 });
+                    }
+                } catch (e) {
+                    console.error('Failed to send start container to channel, falling back to reply', e);
+                    try { await interaction.reply({ components: [startContainer], flags: MessageFlags.IsComponentsV2 }); } catch (err) { console.error(err); }
+                }
                 break;
 
             case 'complete':
