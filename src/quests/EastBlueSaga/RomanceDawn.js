@@ -2,7 +2,7 @@
 const BaseQuest = require('../BaseQuest');
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder } = require('discord.js');
 const raceSteps = require('./RaceSpecificSteps');
-const { morganFightMiniGame } = require('../utils/MiniGames');
+const MiniGames = require('../utils/MiniGames');
 const { generateToken, consumeToken, deleteToken } = require('../../utils/tokenStore');
 const { writeLog } = require('../../utils/fileLogger');
 const logger = require('../../utils/logger');
@@ -264,11 +264,17 @@ class RomanceDawn extends BaseQuest {
     }
 
     async handleInteraction(interaction) {
-        const customId = interaction.customId;
+    // Support transient tokens in customIds like "fight_morgan::<token>"
+    const [rawCustomId, transientToken] = (interaction.customId || '').split('::');
+    const customId = rawCustomId;
 
-        switch(customId) {
+    switch(customId) {
             case 'investigate_barrel':
-                this.currentStep++;
+        // Investigating reveals Luffy and moves the story forward
+        this.currentStep++;
+        // small reward / flavour
+        this.custom = this.custom || {};
+        this.custom.investigated = true;
                 // persist any runtime custom data if present
                 if (this.player) {
                     this.player.activeQuestInstance = { state: this.state, currentStep: this.currentStep, custom: this.custom };
@@ -282,7 +288,61 @@ class RomanceDawn extends BaseQuest {
                     content: "You decided to ignore the barrel. Maybe you'll meet Luffy another time.",
                     components: []
                 });
+                // Mark the quest as available again so player may accept later
                 this.state = 'available';
+                break;
+
+            case 'offer_food':
+                // Friendly approach — Luffy becomes more trusting
+                await this.safeUpdate(interaction, {
+                    content: 'You offer food to Luffy. He happily accepts and seems to like you. He asks to join your crew.',
+                    components: [
+                        new ActionRowBuilder().addComponents(
+                            new ButtonBuilder().setCustomId('join_crew').setLabel('Invite Luffy').setStyle(ButtonStyle.Primary),
+                            new ButtonBuilder().setCustomId('ask_identity').setLabel('Ask who he is').setStyle(ButtonStyle.Secondary)
+                        )
+                    ]
+                });
+                break;
+
+            case 'ask_identity':
+                await this.safeUpdate(interaction, {
+                    content: 'Luffy explains he ate the Gum-Gum fruit and dreams of becoming Pirate King. He seems earnest and energetic.',
+                    components: [
+                        new ActionRowBuilder().addComponents(
+                            new ButtonBuilder().setCustomId('join_crew').setLabel('Join his crew').setStyle(ButtonStyle.Primary),
+                            new ButtonBuilder().setCustomId('decline_crew').setLabel('Politely decline').setStyle(ButtonStyle.Secondary)
+                        )
+                    ]
+                });
+                break;
+
+            case 'join_crew':
+                // Accepting moves to the next story step (Zoro branch may follow)
+                this.currentStep++;
+                this.custom = this.custom || {};
+                this.custom.joinedLuffy = true;
+                if (this.player) {
+                    // Ensure player has base stats object and simple power stat
+                    this.player.stats = this.player.stats || {};
+                    this.player.stats.power = this.player.stats.power || (this.player.level ? this.player.level * 10 : 10);
+                    try { if (typeof this.player.save === 'function') await this.player.save(); } catch (e) {}
+                    this.player.activeQuestInstance = { state: this.state, currentStep: this.currentStep, custom: this.custom };
+                }
+                await this.safeUpdate(interaction, await this.progress());
+                break;
+
+            case 'decline_crew':
+                await this.safeUpdate(interaction, {
+                    content: 'You politely decline. Luffy is disappointed but still sets off on his adventure. Your story continues.',
+                    components: []
+                });
+                // advance a little to keep story moving
+                this.currentStep += 1;
+                if (this.player) {
+                    this.player.activeQuestInstance = { state: this.state, currentStep: this.currentStep, custom: this.custom };
+                    try { if (typeof this.player.save === 'function') await this.player.save(); } catch (e) {}
+                }
                 break;
 
             case 'free_zoro':
@@ -319,8 +379,31 @@ class RomanceDawn extends BaseQuest {
                     try { deleteToken && deleteToken(originalTransient); } catch (e) {}
                     break;
                 }
+                // Ensure player has enough training / power before allowing final fight
+                this.custom = this.custom || {};
+                const trainingCount = this.custom.trainingCount || 0;
+                const requiredTraining = 3; // require a few mini-games before the final boss
 
-                const victory = morganFightMiniGame(this.player);
+                // If player hasn't done required mini-games, present options to train
+                if (trainingCount < requiredTraining) {
+                    await this.safeUpdate(interaction, {
+                        content: `Captain Morgan is strong. You need to get stronger first (completed ${trainingCount}/${requiredTraining}). Choose a way to grow stronger:`,
+                        components: [
+                            new ActionRowBuilder().addComponents(
+                                new ButtonBuilder().setCustomId('mini_train').setLabel('Train (Strength mini-game)').setStyle(ButtonStyle.Primary),
+                                new ButtonBuilder().setCustomId('mini_spar').setLabel('Spar (Practice fight)').setStyle(ButtonStyle.Secondary),
+                                new ButtonBuilder().setCustomId('mini_fish').setLabel('Fish for supplies (buff)').setStyle(ButtonStyle.Success)
+                            )
+                        ]
+                    });
+                    break;
+                }
+
+                // If transient token present in custom id, parse it (e.g., Try Again flow sends fight_morgan::<token>)
+                // Use a robust fight routine that uses MiniGames.turnBasedFight
+                const morganPower = 70 + (this.player?.level || 1) * 5;
+                const result = MiniGames.turnBasedFight(this.player, morganPower);
+                const victory = result.victory;
                 console.info(`RomanceDawn: fight_morgan result=${victory}`);
                 if (victory) {
                     this.currentStep++;
@@ -328,8 +411,10 @@ class RomanceDawn extends BaseQuest {
                         this.player.activeQuestInstance = { state: this.state, currentStep: this.currentStep, custom: this.custom };
                         try { if (typeof this.player.save === 'function') await this.player.save(); } catch (e) {}
                     }
+                    // Show battle log and Morgan thumbnail
+                    const battleSummary = result.log.join('\n');
                     await this.safeUpdate(interaction, {
-                        content: "You defeated Captain Morgan! Zoro is now free and joins your crew!",
+                        content: `You defeated Captain Morgan! Zoro is now free and joins your crew!\n\nBattle log:\n${battleSummary}`,
                         components: []
                     });
                 } else {
@@ -354,8 +439,10 @@ class RomanceDawn extends BaseQuest {
                         writeLog('interactions.log', `Generated retry token for fight_morgan user=${createdTokenPayload.discordId} token=${newToken}`);
                     }
 
+                    // Include battle log and thumbnail for Morgan
+                    const battleSummary = result.log ? result.log.join('\n') : 'You were defeated.';
                     await this.safeUpdate(interaction, {
-                        content: "You were defeated by Morgan. Try again!",
+                        content: `You were defeated by Morgan. Try again!\n\nBattle log:\n${battleSummary}`,
                         components: [
                             new ActionRowBuilder().addComponents(
                                 new ButtonBuilder()
@@ -365,6 +452,44 @@ class RomanceDawn extends BaseQuest {
                             )
                         ]
                     });
+                }
+                break;
+
+            // Mini-game handlers: training, sparring, fishing
+            case 'mini_train':
+            case 'mini_spar':
+            case 'mini_fish':
+                // Map customId to actual mini-game
+                {
+                    let miniResult = { success: false, amount: 0 };
+                    try {
+                        if (customId === 'mini_train') miniResult = MiniGames.trainingMiniGame(this.player);
+                        else if (customId === 'mini_spar') miniResult = MiniGames.sparMiniGame(this.player);
+                        else if (customId === 'mini_fish') miniResult = MiniGames.fishingMiniGame(this.player);
+                    } catch (e) {
+                        console.error('Mini-game threw error', e);
+                    }
+
+                    // Apply result to player and quest progress
+                    this.custom = this.custom || {};
+                    this.custom.trainingCount = (this.custom.trainingCount || 0) + (miniResult.success ? 1 : 0);
+                    // reward: increase player's stats.power
+                    if (miniResult.success && this.player) {
+                        this.player.stats = this.player.stats || {};
+                        this.player.stats.power = (this.player.stats.power || (this.player.level ? this.player.level * 10 : 10)) + (miniResult.amount || 5);
+                        // persist player
+                        try { if (typeof this.player.save === 'function') await this.player.save(); } catch (e) { console.error('Failed to save player after minigame', e); }
+                    }
+
+                    await this.safeUpdate(interaction, {
+                        content: miniResult.success ? `Mini-game success! Power +${miniResult.amount}. Training progress: ${this.custom.trainingCount || 0}` : 'Mini-game failed. Try again later.',
+                        components: []
+                    });
+                    // persist quest instance
+                    if (this.player) {
+                        this.player.activeQuestInstance = { state: this.state, currentStep: this.currentStep, custom: this.custom };
+                        try { if (typeof this.player.save === 'function') await this.player.save(); } catch (e) {}
+                    }
                 }
                 break;
 

@@ -44,3 +44,10 @@ All notable changes to this project will be documented in this file. This projec
 ### Changed
 - QuestManager now restores serialized quest instances and prefers class `fromJSON` where available.
 
+### Added (Unreleased)
+- Added multiple mini-games (training, spar, fishing) used by `RomanceDawn` to let players increase power before boss fights.
+- Implemented a turn-based fight simulator (`turnBasedFight`) and wired Morgan as an end-boss encounter with live battle log output.
+- Made Morgan battle messages include a battle log summary. Added a thumbnail reference in battle messages (external image used at runtime).
+- Added unit tests for mini-games and the turn-based fight (`test/minigames.test.js`).
+- Added `/shop` and `/inventory` commands for early game item economy and consumables.
+
