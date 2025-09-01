@@ -76,7 +76,7 @@ client.on('interactionCreate', async interaction => {
           // Some slash commands (for example `/start`) create ephemeral flows and collectors
           // that should retain ownership of component interactions. Only skip global routing for
           // those known collector-driven commands. Allow routing for quest interactions (e.g. `/quest accept`).
-          const collectorCommands = new Set(['start']);
+          const collectorCommands = new Set(['start', 'ping', 'profile', 'test-button']);
           if (collectorCommands.has(originatingCommand)) {
             console.info('Component interaction originates from command', originatingCommand, '- skipping global handler');
             return;
