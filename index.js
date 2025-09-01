@@ -67,6 +67,22 @@ client.on('interactionCreate', async interaction => {
 
     // Component interactions (buttons / select menus) -> route to active quest if any
     if ((interaction.isButton && interaction.isButton()) || (interaction.isStringSelectMenu && interaction.isStringSelectMenu())) {
+      // Quick-path: let known central handlers (non-collector) process some customIds first.
+      try {
+        const rawId = interaction.customId || (interaction.values && interaction.values[0]) || null;
+        // If this is the ping button, dispatch directly to the ping command handler if present
+        if (rawId && rawId.startsWith('ping_button_v2')) {
+          const pingCommand = client.commands.get('ping');
+          if (pingCommand && typeof pingCommand.handleButton === 'function') {
+            try {
+              const handled = await pingCommand.handleButton(interaction, client);
+              if (handled) return; // already handled
+            } catch (err) { console.error('ping handler failed', err); }
+          }
+        }
+      } catch (e) {
+        // non-fatal: continue to regular routing
+      }
       // If this interaction's message was created as a reply to a slash command, assume
       // the originating command (or its collector) should handle it and skip global routing.
       // This avoids consuming interactions that are part of ephemeral command flows like `/start`.
