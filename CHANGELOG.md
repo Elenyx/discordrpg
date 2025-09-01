@@ -25,6 +25,12 @@ All notable changes to this project will be documented in this file. This projec
  - Updated `index.js` to initialize logger and route unhandled rejections/uncaught exceptions to the logger.
  - Fixed model attribute/column usage inconsistencies (use `discordId` model attribute in code).
 
+- Reorganized `RomanceDawn` into a per-quest folder: `src/quests/EastBlueSaga/RomanceDawn/index.js` and cleaned up duplicate legacy file usage.
+- Implemented quest auto-discovery (`src/quests/index.js`) and automatic registration in `QuestManager` so quests placed in saga subfolders are loaded without manual requires.
+- Removed deprecated compatibility shim `src/quests/EastBlueSaga/RomanceDawn.js` and updated documentation (`quests_list.md`) to point to the new path.
+- Updated `QuestManager` to register discovered quests by their exported class `id`/`name` and made discovery resilient to mixed module export shapes.
+- Tests updated and re-run after reorganization; all tests pass.
+
 - Improved error logging for interactions and components:
 	- Global interaction routing now logs component failures and metadata to the configured error channel (`index.js`).
 	- Quest `safeUpdate` fallbacks and player-save failures now emit warnings to the error logger (`src/quests/*`).
