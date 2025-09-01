@@ -12,6 +12,34 @@ class QuestManager {
         this.quests = new Map();
     }
 
+    // Safe reply helper: attempt to reply with the provided body. If sending V2
+    // components fails due to builder validation (e.g., undefined accessory),
+    // send a minimal fallback message with a Continue/Resume button so the
+    // user isn't stuck.
+    async safeReply(interaction, body) {
+        try {
+            await interaction.reply(body);
+            return;
+        } catch (err) {
+            console.error('safeReply: primary reply failed, falling back to resume button', err && err.message ? err.message : err);
+            try {
+                const resumeRow = new ActionRowBuilder().addComponents(
+                    new ButtonBuilder().setCustomId('resume_quest').setLabel('Continue Quest').setStyle(ButtonStyle.Primary)
+                );
+                const fallback = { content: (body && body.content) ? body.content : 'Quest UI failed to render. Click Continue to resume.', components: [resumeRow] };
+                if (!interaction.replied && !interaction.deferred) {
+                    await interaction.reply(fallback);
+                } else if (interaction.deferred) {
+                    await interaction.editReply(fallback);
+                } else {
+                    await interaction.followUp(fallback);
+                }
+            } catch (e) {
+                console.error('safeReply: fallback also failed', e && e.message ? e.message : e);
+            }
+        }
+    }
+
     registerQuest(questClass) {
         this.quests.set(questClass.id || questClass.name, questClass);
     }
@@ -55,7 +83,7 @@ class QuestManager {
                 const currentQuest = this.getCurrentQuest(player);
                 if (!currentQuest) {
                     const noQuestContainer = new ContainerBuilder().addTextDisplayComponents(td => td.setContent('You are not currently on any quest.'));
-                    return await interaction.reply({ components: [noQuestContainer], flags: MessageFlags.IsComponentsV2 });
+                    return await this.safeReply(interaction, { components: [noQuestContainer], flags: MessageFlags.IsComponentsV2 });
                 }
 
                 // If the quest is not in-progress, show a resume button and recent history
@@ -82,7 +110,7 @@ class QuestManager {
                     } catch (e) { historyText = 'No history available.'; }
 
                     progressContainer.addSectionComponents(section => section.addTextDisplayComponents(td => td.setContent(`Recent choices:\n${historyText}`)));
-                    return await interaction.reply({ components: [progressContainer, resumeRow], flags: MessageFlags.IsComponentsV2 });
+                    return await this.safeReply(interaction, { components: [progressContainer, resumeRow], flags: MessageFlags.IsComponentsV2 });
                 }
 
                     // If the quest is in-progress, preview the next step to see if it has interactive components.
@@ -97,11 +125,11 @@ class QuestManager {
                             new ButtonBuilder().setCustomId('resume_quest').setLabel('Continue Quest').setStyle(ButtonStyle.Primary)
                         );
                         progressContainer.addSectionComponents(section => section.addTextDisplayComponents(td => td.setContent('Quest is active. Use the button below to continue.')));
-                        return await interaction.reply({ components: [progressContainer, resumeRow], flags: MessageFlags.IsComponentsV2 });
+                        return await this.safeReply(interaction, { components: [progressContainer, resumeRow], flags: MessageFlags.IsComponentsV2 });
                     }
 
                     progressContainer.addSectionComponents(section => section.addTextDisplayComponents(td => td.setContent('Quest is active. Use the quest message to continue.')));
-                    return await interaction.reply({ components: [progressContainer], flags: MessageFlags.IsComponentsV2 });
+                    return await this.safeReply(interaction, { components: [progressContainer], flags: MessageFlags.IsComponentsV2 });
 
             case 'accept':
                 // If player has an active quest record, try to resume if it's not in-progress
@@ -128,7 +156,7 @@ class QuestManager {
                                     if (!interaction.replied && !interaction.deferred) await interaction.reply({ content: 'Quest resumed.', ephemeral: true });
                                 } else {
                                     const startContainer = new ContainerBuilder().addTextDisplayComponents(td => td.setContent(startMsg.content || 'Quest resumed.'));
-                                    await interaction.reply({ components: [startContainer], flags: MessageFlags.IsComponentsV2 });
+                                    await this.safeReply(interaction, { components: [startContainer], flags: MessageFlags.IsComponentsV2 });
                                 }
                                 return;
                             } catch (e) {
@@ -164,7 +192,8 @@ class QuestManager {
                 // If the quest provided action components (ActionRowBuilder instances), send a
                 // classic message with `content` and `components` (action rows). Classic component
                 // messages are universally supported and produce standard button/select interactions
-                // that the global handler can route.
+                // that the global handler can route. Otherwise, send a Components V2 Container via
+                // safeReply so we have a fallback if rendering fails.
                 try {
                     if (startMessage.components && Array.isArray(startMessage.components) && startMessage.components.length && interaction.channel && typeof interaction.channel.send === 'function') {
                         const sentMsg = await interaction.channel.send({ content: startMessage.content, components: startMessage.components });
@@ -183,7 +212,7 @@ class QuestManager {
                                 await interaction.reply({ content: 'Quest started.', ephemeral: true });
                             }
                         } else {
-                            await interaction.reply({ components: [startContainer], flags: MessageFlags.IsComponentsV2 });
+                            await this.safeReply(interaction, { components: [startContainer], flags: MessageFlags.IsComponentsV2 });
                         }
                     }
                 } catch (e) {
@@ -268,7 +297,7 @@ class QuestManager {
                         );
                     }
 
-                    await interaction.reply({ components: [container], flags: MessageFlags.IsComponentsV2 });
+                    await this.safeReply(interaction, { components: [container], flags: MessageFlags.IsComponentsV2 });
                 } catch (error) {
                     await interaction.reply(`Cannot complete quest: ${error.message}`);
                 }
