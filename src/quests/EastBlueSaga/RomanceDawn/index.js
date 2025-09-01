@@ -250,11 +250,21 @@ class RomanceDawn extends BaseQuest {
                 await this.safeUpdate(interaction, { content: `You were defeated by Morgan. Try again!\n\nBattle log:\n${battleSummary}`, components: [ new ActionRowBuilder().addComponents( new ButtonBuilder().setCustomId(`fight_morgan::${newToken}`).setLabel('Try Again').setStyle(ButtonStyle.Danger) ) ] }); }
                 break; }
             case 'distract_morgan': {
+                // The distraction gives you an opening — advance to the next step immediately
                 const msg = await this.applyConsequences('distract_morgan');
-                // Keep the same step or advance if needed, then give a continue option
-                this.currentStep = this.currentStep || (this.currentStep + 0);
-                if (this.player) { this.player.activeQuestInstance = { state: this.state, currentStep: this.currentStep, custom: this.custom }; try { if (typeof this.player.save === 'function') await this.player.save(); } catch (e) {} }
-                await this.safeUpdate(interaction, { content: msg, components: [ this.buildContinueButton((this.currentStep || 1) + 1) ] });
+                // Add a bit of narrative so the player sees the effect
+                const narrative = `${msg}\nYou shout and toss a net, drawing the marines' attention away long enough to slip past.`;
+                // Advance the quest step and persist
+                this.currentStep = (this.currentStep || 1) + 1;
+                if (this.player) {
+                    this.player.activeQuestInstance = { state: this.state, currentStep: this.currentStep, custom: this.custom };
+                    try { if (typeof this.player.save === 'function') await this.player.save(); } catch (e) { console.error('Failed to save player after distract_morgan', e); }
+                }
+                // Render the next step so the player has immediate interactive options
+                const nextPayload = await this.progress();
+                // If the quest returned only text, include our narrative as a section above it
+                if (nextPayload && nextPayload.content) nextPayload.content = `${narrative}\n\n${nextPayload.content}`;
+                await this.safeUpdate(interaction, nextPayload);
             } break;
             case 'use_map_fragment': { const items = (this.player && this.player.stats && this.player.stats.items) || []; const frag = items.find(i => i.id === 'map_fragment'); if (!frag) { await this.safeUpdate(interaction, { content: 'You do not have a map fragment to use.', components: [ this.buildContinueButton(this.currentStep || 1) ] }); break; } const puzzle = MiniGames.mapPuzzle(this.player || {}); if (puzzle.success) { frag.qty = (frag.qty || 1) - 1; if (frag.qty <= 0) this.player.stats.items = items.filter(i => i.id !== 'map_fragment'); this.player.stats.power = (this.player.stats.power || (this.player.level || 1) * 10) + 3; try { if (typeof this.player.save === 'function') await this.player.save(); } catch (e) {} await this.safeUpdate(interaction, { content: 'You solved the map puzzle and gained a clue. Power +3', components: [ this.buildContinueButton(this.currentStep || 1) ] }); } else { await this.safeUpdate(interaction, { content: 'The map puzzle eludes you for now.', components: [ this.buildContinueButton(this.currentStep || 1) ] }); } } break;
             case 'mini_train':
