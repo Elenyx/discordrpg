@@ -220,8 +220,22 @@ class RomanceDawn extends BaseQuest {
                 return;
             }
         } catch (err) {
-            // If the interaction is unknown/expired, try reply/edit as a fallback
+            // If the interaction.update fails (Discord API error), log detailed diagnostics
+            const errCode = err && err.code ? err.code : null;
             console.warn('safeUpdate: interaction.update failed, attempting fallback:', err && err.code ? `${err.code}` : err);
+            try {
+                await logger.logWarning('Interaction Update Failed', 'interaction.update failed, attempting fallback', {
+                    userId: interaction?.user?.id,
+                    customId: interaction?.customId,
+                    messageId: interaction?.message?.id,
+                    messageInteractionCommand: interaction?.message?.interaction?.commandName,
+                    errorCode: errCode,
+                    errorMessage: err instanceof Error ? err.message : String(err),
+                    payloadPreview: payload ? (typeof payload === 'string' ? payload : JSON.stringify(payload).substring(0, 1000)) : null
+                });
+            } catch (logErr) {
+                console.error('Logger failed while reporting interaction.update failure', logErr);
+            }
             try {
                 if (!interaction.replied && !interaction.deferred) {
                     await interaction.reply(Object.assign({}, payload, { ephemeral: true }));
@@ -233,7 +247,18 @@ class RomanceDawn extends BaseQuest {
                 }
             } catch (e) {
                 console.error('safeUpdate: fallback failed:', e);
-                try { await logger.logWarning('Interaction Update Failed', 'safeUpdate fallback failed', { userId: interaction.user?.id, customId: interaction.customId, guildId: interaction.guildId, channelId: interaction.channelId, error: e instanceof Error ? e.message : String(e) }); } catch (err) { console.error('Logger failed', err); }
+                try {
+                    await logger.logError('Interaction Update Fallback Failed', e, {
+                        userId: interaction?.user?.id,
+                        customId: interaction?.customId,
+                        guildId: interaction?.guildId,
+                        channelId: interaction?.channelId,
+                        messageId: interaction?.message?.id,
+                        payloadPreview: payload ? (typeof payload === 'string' ? payload : JSON.stringify(payload).substring(0, 1000)) : null
+                    });
+                } catch (logErr) {
+                    console.error('Logger failed while reporting fallback failure', logErr);
+                }
             }
         }
     }
