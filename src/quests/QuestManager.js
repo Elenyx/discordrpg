@@ -232,9 +232,10 @@ class QuestManager {
                         );
 
                     // Add a small thumbnail accessory via a Section (supported on SectionBuilder)
-                    container.addSectionComponents(section => section.setThumbnailAccessory(thumbnail =>
-                        thumbnail.setURL('https://i.imgur.com/7bKXQ1N.png').setDescription('Quest Complete')
-                    ));
+                    // NOTE: previously this used a builder callback which resulted in an undefined
+                    // accessory at runtime (validation error). Removing the accessory to avoid
+                    // throwing when serializing the container. Re-add explicitly with a
+                    // ThumbnailBuilder instance if needed and available on the discord.js export.
 
                     if (rewardResult.allies && rewardResult.allies.length) {
                         container.addSectionComponents(section => section

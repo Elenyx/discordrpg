@@ -111,6 +111,13 @@ class RomanceDawn extends BaseQuest {
 
     calculateRewards() { return { berries: 100, exp: 50, items: ['Straw Hat'] }; }
 
+    // Helper to build a Continue button pointing to a specific target step
+    buildContinueButton(targetStep) {
+        return new ActionRowBuilder().addComponents(
+            new ButtonBuilder().setCustomId(`romance_next::${targetStep}`).setLabel('Continue your journey').setStyle(ButtonStyle.Primary)
+        );
+    }
+
     async progress() {
         if (this.state !== 'in-progress') throw new Error('Quest is not in progress');
         const currentStep = this.steps[this.currentStep - 1];
@@ -127,7 +134,19 @@ class RomanceDawn extends BaseQuest {
     }
 
     async safeUpdate(interaction, payload) {
-        try { if (interaction && typeof interaction.update === 'function') { await interaction.update(payload); return; } }
+        // If the payload has no components but the quest still has a next step,
+        // inject a Continue button so the quest doesn't dead-end.
+        try {
+            payload = payload || {};
+            const componentsEmpty = !payload.components || (Array.isArray(payload.components) && payload.components.length === 0);
+            const nextStepIdx = (this.currentStep || 1) - 1;
+            const hasNextStep = Array.isArray(this.steps) && this.steps[nextStepIdx];
+            if (componentsEmpty && this.state === 'in-progress' && hasNextStep) {
+                // Use instance helper to create the continue button for the current step
+                payload.components = [ this.buildContinueButton(this.currentStep || 1) ];
+            }
+            if (interaction && typeof interaction.update === 'function') { await interaction.update(payload); return; }
+        }
         catch (err) {
             const errCode = err && err.code ? err.code : null;
             console.warn('safeUpdate: interaction.update failed, attempting fallback:', err && err.code ? `${err.code}` : err);
@@ -140,7 +159,16 @@ class RomanceDawn extends BaseQuest {
     async handleInteraction(interaction) {
         const [rawCustomId, transientToken] = (interaction.customId || '').split('::');
         const customId = rawCustomId;
+    // ...existing code...
         switch (customId) {
+            case 'romance_next': {
+                // transientToken contains the target step we should show next
+                const target = parseInt(transientToken, 10) || (this.currentStep || 1);
+                this.currentStep = target;
+                if (this.player) { this.player.activeQuestInstance = { state: this.state, currentStep: this.currentStep, custom: this.custom }; try { if (typeof this.player.save === 'function') await this.player.save(); } catch (e) {} }
+                await this.safeUpdate(interaction, await this.progress());
+                break;
+            }
             case 'resume_quest':
                 if (this.state !== 'in-progress') { this.state = 'in-progress'; this.currentStep = this.currentStep || 1; if (this.player) { this.player.activeQuest = this.id; this.player.activeQuestInstance = { state: this.state, currentStep: this.currentStep, custom: this.custom }; try { if (typeof this.player.save === 'function') await this.player.save(); } catch (e) {} } }
                 await this.safeUpdate(interaction, await this.progress());
@@ -149,16 +177,62 @@ class RomanceDawn extends BaseQuest {
                 this.state = 'abandoned'; if (this.player) { try { this.player.activeQuest = null; this.player.activeQuestData = null; this.player.activeQuestInstance = null; if (typeof this.player.save === 'function') await this.player.save(); } catch (e) { console.error('Failed to save player on abandon', e); } } await this.safeUpdate(interaction, { content: 'You have abandoned the quest.', components: [] }); break;
             case 'investigate_barrel':
                 this.currentStep++; this.custom = this.custom || {}; this.custom.investigated = true; if (this.player) { this.player.activeQuestInstance = { state: this.state, currentStep: this.currentStep, custom: this.custom }; try { if (typeof this.player.save === 'function') await this.player.save(); } catch (e) {} } await this.safeUpdate(interaction, await this.progress()); break;
-            case 'search_barrel': { const msg = await this.applyConsequences('search_barrel'); this.currentStep++; if (this.player) { this.player.activeQuestInstance = { state: this.state, currentStep: this.currentStep, custom: this.custom }; try { if (typeof this.player.save === 'function') await this.player.save(); } catch (e) {} } await this.safeUpdate(interaction, { content: msg, components: [] }); } break;
-            case 'check_survivors': { const msg = await this.applyConsequences('check_survivors'); this.currentStep++; if (this.player) { this.player.activeQuestInstance = { state: this.state, currentStep: this.currentStep, custom: this.custom }; try { if (typeof this.player.save === 'function') await this.player.save(); } catch (e) {} } await this.safeUpdate(interaction, { content: msg, components: [] }); } break;
+            case 'search_barrel': {
+                const msg = await this.applyConsequences('search_barrel');
+                // advance now and show a Continue button so the player can proceed
+                this.currentStep++;
+                if (this.player) { this.player.activeQuestInstance = { state: this.state, currentStep: this.currentStep, custom: this.custom }; try { if (typeof this.player.save === 'function') await this.player.save(); } catch (e) {} }
+                await this.safeUpdate(interaction, { content: msg, components: [ this.buildContinueButton(this.currentStep) ] });
+            } break;
+            case 'check_survivors': {
+                const msg = await this.applyConsequences('check_survivors');
+                this.currentStep++;
+                if (this.player) { this.player.activeQuestInstance = { state: this.state, currentStep: this.currentStep, custom: this.custom }; try { if (typeof this.player.save === 'function') await this.player.save(); } catch (e) {} }
+                await this.safeUpdate(interaction, { content: msg, components: [ this.buildContinueButton(this.currentStep) ] });
+            } break;
             case 'ignore_barrel': this.state = 'available'; this.custom = this.custom || {}; this.custom.ignoredBarrel = true; if (this.player) { this.player.activeQuest = this.id; this.player.activeQuestInstance = { state: this.state, currentStep: this.currentStep || 1, custom: this.custom }; try { if (typeof this.player.save === 'function') await this.player.save(); } catch (e) { console.error('Failed to save player when ignoring barrel', e); } } await this.safeUpdate(interaction, { content: 'You decided to ignore the barrel for now. You can reconsider it later.', components: [ new ActionRowBuilder().addComponents( new ButtonBuilder().setCustomId('investigate_barrel').setLabel('Reconsider the barrel').setStyle(ButtonStyle.Primary), new ButtonBuilder().setCustomId('end_quest_now').setLabel('Give up on this quest').setStyle(ButtonStyle.Secondary) ) ] }); break;
             case 'end_quest_now': this.state = 'abandoned'; if (this.player) { try { if (typeof this.player.save === 'function') { this.player.activeQuest = null; this.player.activeQuestData = null; this.player.activeQuestInstance = null; await this.player.save(); } } catch (e) { console.error('Failed to clear player when abandoning quest', e); } } await this.safeUpdate(interaction, { content: 'You have abandoned the Romance Dawn quest.', components: [] }); break;
             case 'offer_food': { const msg = await this.applyConsequences('offer_food'); await this.safeUpdate(interaction, { content: `${msg}\nHe asks to join your crew.`, components: [ new ActionRowBuilder().addComponents( new ButtonBuilder().setCustomId('join_crew').setLabel('Invite Luffy').setStyle(ButtonStyle.Primary), new ButtonBuilder().setCustomId('ask_identity').setLabel('Ask who he is').setStyle(ButtonStyle.Secondary) ) ] }); } break;
-            case 'flatter_luffy': { const msg = await this.applyConsequences('flatter_luffy'); const sparRes = MiniGames.sparMiniGame(this.player || {}); if (sparRes.success) { await this.safeUpdate(interaction, { content: `${msg}\nYou spar with Luffy and win! Power +${sparRes.amount}`, components: [] }); } else { await this.safeUpdate(interaction, { content: `${msg}\nYou spar with Luffy but it's a close match.`, components: [] }); } } break;
+            case 'flatter_luffy': {
+                const msg = await this.applyConsequences('flatter_luffy');
+                const sparRes = MiniGames.sparMiniGame(this.player || {});
+                // Present result and a continue button that moves to the next step
+                const target = (this.currentStep || 1) + 1;
+                if (sparRes.success) {
+                    await this.safeUpdate(interaction, { content: `${msg}\nYou spar with Luffy and win! Power +${sparRes.amount}`, components: [ this.buildContinueButton(target) ] });
+                } else {
+                    await this.safeUpdate(interaction, { content: `${msg}\nYou spar with Luffy but it's a close match.`, components: [ this.buildContinueButton(target) ] });
+                }
+            } break;
             case 'ask_identity': await this.safeUpdate(interaction, { content: 'Luffy explains he ate the Gum-Gum fruit and dreams of becoming Pirate King. He seems earnest and energetic.', components: [ new ActionRowBuilder().addComponents( new ButtonBuilder().setCustomId('join_crew').setLabel('Join his crew').setStyle(ButtonStyle.Primary), new ButtonBuilder().setCustomId('decline_crew').setLabel('Politely decline').setStyle(ButtonStyle.Secondary) ) ] }); break;
-            case 'join_crew': { const msg = await this.applyConsequences('join_crew'); this.currentStep++; this.custom = this.custom || {}; this.custom.joinedLuffy = true; if (this.player) { this.player.activeQuestInstance = { state: this.state, currentStep: this.currentStep, custom: this.custom }; } await this.safeUpdate(interaction, await this.progress()); try { await interaction.followUp({ content: msg, ephemeral: true }); } catch (e) {} } break;
-            case 'decline_crew': { const msg = await this.applyConsequences('decline_crew'); await this.safeUpdate(interaction, { content: `You politely decline. Luffy is disappointed but still sets off on his adventure. Your story continues.\n${msg}`, components: [] }); this.currentStep += 1; if (this.player) { this.player.activeQuestInstance = { state: this.state, currentStep: this.currentStep, custom: this.custom }; try { if (typeof this.player.save === 'function') await this.player.save(); } catch (e) {} } } break;
-            case 'free_zoro': if (interaction.values[0] === 'free_yes') { this.currentStep++; if (this.player) { this.player.activeQuestInstance = { state: this.state, currentStep: this.currentStep, custom: this.custom }; try { if (typeof this.player.save === 'function') await this.player.save(); } catch (e) {} } await this.safeUpdate(interaction, await this.progress()); } else { await this.safeUpdate(interaction, { content: "You decided not to free Zoro. The story continues differently...", components: [] }); this.currentStep += 2; if (this.player) { this.player.activeQuestInstance = { state: this.state, currentStep: this.currentStep, custom: this.custom }; try { if (typeof this.player.save === 'function') await this.player.save(); } catch (e) {} } await this.progress(); } break;
+            case 'join_crew': {
+                const msg = await this.applyConsequences('join_crew');
+                this.currentStep++;
+                this.custom = this.custom || {};
+                this.custom.joinedLuffy = true;
+                if (this.player) { this.player.activeQuestInstance = { state: this.state, currentStep: this.currentStep, custom: this.custom }; }
+                await this.safeUpdate(interaction, await this.progress());
+                try { await interaction.followUp({ content: msg, ephemeral: true }); } catch (e) {}
+            } break;
+            case 'decline_crew': {
+                const msg = await this.applyConsequences('decline_crew');
+                // Advance and show a Continue button so the player can proceed
+                this.currentStep += 1;
+                if (this.player) { this.player.activeQuestInstance = { state: this.state, currentStep: this.currentStep, custom: this.custom }; try { if (typeof this.player.save === 'function') await this.player.save(); } catch (e) {} }
+                await this.safeUpdate(interaction, { content: `You politely decline. Luffy is disappointed but still sets off on his adventure. Your story continues.\n${msg}`, components: [ this.buildContinueButton(this.currentStep) ] });
+            } break;
+            case 'free_zoro':
+                if (interaction.values[0] === 'free_yes') {
+                    this.currentStep++;
+                    if (this.player) { this.player.activeQuestInstance = { state: this.state, currentStep: this.currentStep, custom: this.custom }; try { if (typeof this.player.save === 'function') await this.player.save(); } catch (e) {} }
+                    await this.safeUpdate(interaction, await this.progress());
+                } else {
+                    // Player chose not to free Zoro. Jump ahead and immediately show the new step
+                    this.currentStep += 2;
+                    if (this.player) { this.player.activeQuestInstance = { state: this.state, currentStep: this.currentStep, custom: this.custom }; try { if (typeof this.player.save === 'function') await this.player.save(); } catch (e) {} }
+                    await this.safeUpdate(interaction, await this.progress());
+                }
+                break;
             case 'fight_morgan': {
                 console.info(`RomanceDawn: fight_morgan interaction for player=${this.player?.discordId || this.player?.id || 'unknown'}`);
                 const tokenPayload = interaction.tokenPayload || null;
@@ -172,9 +246,16 @@ class RomanceDawn extends BaseQuest {
                 if (victory) { this.currentStep++; if (this.player) { this.player.activeQuestInstance = { state: this.state, currentStep: this.currentStep, custom: this.custom }; try { if (typeof this.player.save === 'function') await this.player.save(); } catch (e) {} } const battleSummary = result.log.join('\n'); await this.safeUpdate(interaction, { content: `You defeated Captain Morgan! Zoro is now free and joins your crew!\n\nBattle log:\n${battleSummary}`, components: [] }); }
                 else { if (this.player) { this.player.activeQuestInstance = { state: this.state, currentStep: this.currentStep, custom: this.custom }; try { if (typeof this.player.save === 'function') await this.player.save(); } catch (e) { console.error('Failed to save player after Morgan defeat', e); try { await logger.logWarning('Player Save Failed', 'Failed to save player after Morgan defeat', { userId: this.player.discordId || this.player.id, error: e instanceof Error ? e.message : String(e) }); } catch (err) { console.error('Logger failed', err); } } }
                 let newToken; if (tokenPayload) { const newPayload = Object.assign({}, tokenPayload, { retries: (tokenPayload.retries || 0) + 1 }); try { deleteToken && deleteToken(originalTransient); } catch (e) {} newToken = generateToken(newPayload); writeLog('interactions.log', `Rotated retry token for user=${newPayload.discordId} newRetries=${newPayload.retries} token=${newToken}`); } else { const createdTokenPayload = { discordId: this.player?.discordId || this.player?.id || null, questId: this.id, currentStep: this.currentStep, retries: 1 }; newToken = generateToken(createdTokenPayload); writeLog('interactions.log', `Generated retry token for fight_morgan user=${createdTokenPayload.discordId} token=${newToken}`); }
-                const battleSummary = result.log ? result.log.join('\n') : 'You were defeated.'; await this.safeUpdate(interaction, { content: `You were defeated by Morgan. Try again!\n\nBattle log:\n${battleSummary}`, components: [ new ActionRowBuilder().addComponents( new ButtonBuilder().setCustomId(`fight_morgan::${newToken}`).setLabel('Try Again').setStyle(ButtonStyle.Danger) ) ] }); }
+                const battleSummary = result.log ? result.log.join('\n') : 'You were defeated.';
+                await this.safeUpdate(interaction, { content: `You were defeated by Morgan. Try again!\n\nBattle log:\n${battleSummary}`, components: [ new ActionRowBuilder().addComponents( new ButtonBuilder().setCustomId(`fight_morgan::${newToken}`).setLabel('Try Again').setStyle(ButtonStyle.Danger) ) ] }); }
                 break; }
-            case 'distract_morgan': { const msg = await this.applyConsequences('distract_morgan'); this.currentStep = this.currentStep || this.currentStep + 0; if (this.player) { this.player.activeQuestInstance = { state: this.state, currentStep: this.currentStep, custom: this.custom }; try { if (typeof this.player.save === 'function') await this.player.save(); } catch (e) {} } await this.safeUpdate(interaction, { content: msg, components: [] }); } break;
+            case 'distract_morgan': {
+                const msg = await this.applyConsequences('distract_morgan');
+                // Keep the same step or advance if needed, then give a continue option
+                this.currentStep = this.currentStep || (this.currentStep + 0);
+                if (this.player) { this.player.activeQuestInstance = { state: this.state, currentStep: this.currentStep, custom: this.custom }; try { if (typeof this.player.save === 'function') await this.player.save(); } catch (e) {} }
+                await this.safeUpdate(interaction, { content: msg, components: [ this.buildContinueButton((this.currentStep || 1) + 1) ] });
+            } break;
             case 'use_map_fragment': { const items = (this.player && this.player.stats && this.player.stats.items) || []; const frag = items.find(i => i.id === 'map_fragment'); if (!frag) { await this.safeUpdate(interaction, { content: 'You do not have a map fragment to use.', components: [] }); break; } const puzzle = MiniGames.mapPuzzle(this.player || {}); if (puzzle.success) { frag.qty = (frag.qty || 1) - 1; if (frag.qty <= 0) this.player.stats.items = items.filter(i => i.id !== 'map_fragment'); this.player.stats.power = (this.player.stats.power || (this.player.level || 1) * 10) + 3; try { if (typeof this.player.save === 'function') await this.player.save(); } catch (e) {} await this.safeUpdate(interaction, { content: 'You solved the map puzzle and gained a clue. Power +3', components: [] }); } else { await this.safeUpdate(interaction, { content: 'The map puzzle eludes you for now.', components: [] }); } } break;
             case 'mini_train':
             case 'mini_spar':
@@ -184,7 +265,8 @@ class RomanceDawn extends BaseQuest {
                 this.custom = this.custom || {};
                 this.custom.trainingCount = (this.custom.trainingCount || 0) + (miniResult.success ? 1 : 0);
                 if (miniResult.success && this.player) { this.player.stats = this.player.stats || {}; this.player.stats.power = (this.player.stats.power || (this.player.level ? this.player.level * 10 : 10)) + (miniResult.amount || 5); try { if (typeof this.player.save === 'function') await this.player.save(); } catch (e) { console.error('Failed to save player after minigame', e); } }
-                await this.safeUpdate(interaction, { content: miniResult.success ? `Mini-game success! Power +${miniResult.amount}. Training progress: ${this.custom.trainingCount || 0}` : 'Mini-game failed. Try again later.', components: [] });
+                // Offer a continue button so the user can return to the previous choice/state
+                await this.safeUpdate(interaction, { content: miniResult.success ? `Mini-game success! Power +${miniResult.amount}. Training progress: ${this.custom.trainingCount || 0}` : 'Mini-game failed. Try again later.', components: [ this.buildContinueButton(this.currentStep || 1) ] });
                 if (this.player) { this.player.activeQuestInstance = { state: this.state, currentStep: this.currentStep, custom: this.custom }; try { if (typeof this.player.save === 'function') await this.player.save(); } catch (e) {} }
             } break;
             default:
@@ -196,3 +278,4 @@ class RomanceDawn extends BaseQuest {
 }
 
 module.exports = RomanceDawn;
+
