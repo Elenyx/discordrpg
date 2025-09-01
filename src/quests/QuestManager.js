@@ -91,8 +91,20 @@ class QuestManager {
                         td => td.setContent(startMessage.content)
                     );
 
-                // If the quest provided action components, send them as action rows (kept in components)
-                await interaction.reply({ components: [startContainer, ...(startMessage.components || [])], flags: MessageFlags.IsComponentsV2 });
+                // If the quest provided action components, attach them to the Container so Components V2
+                // message only contains display components (and the action rows are nested inside).
+                if (startMessage.components && Array.isArray(startMessage.components) && startMessage.components.length) {
+                    for (const ar of startMessage.components) {
+                        try {
+                            startContainer.addActionRowComponents(ar);
+                        } catch (e) {
+                            // Log and continue — still send the container without the failing action row
+                            console.error('Failed to attach action row to start container', e);
+                        }
+                    }
+                }
+
+                await interaction.reply({ components: [startContainer], flags: MessageFlags.IsComponentsV2 });
                 break;
 
             case 'complete':
