@@ -57,6 +57,7 @@ client.on('interactionCreate', async interaction => {
         await command.execute(interaction);
       } catch (error) {
         console.error(error);
+        try { await logger.logError('Slash Command Error', error, { userId: interaction.user.id, command: interaction.commandName, guildId: interaction.guildId, channelId: interaction.channelId }); } catch (err) { console.error('Logger failed', err); }
         if (!interaction.replied && !interaction.deferred) {
           await interaction.reply({ content: 'There was an error executing that command!', ephemeral: true });
         }
@@ -101,6 +102,7 @@ client.on('interactionCreate', async interaction => {
         }
       } catch (e) {
         console.error('Failed to load player for interaction:', e);
+        try { await logger.logWarning('Player Load Failed', 'Failed to load player for interaction', { userId: interaction.user.id, error: e instanceof Error ? e.message : String(e) }); } catch (err) { console.error('Logger failed', err); }
       }
 
       if (!player) {
@@ -139,7 +141,7 @@ client.on('interactionCreate', async interaction => {
             } else if (interaction.deferred) {
               await interaction.editReply({ content: 'No player profile found. Use the quest commands to start (e.g. /quest accept).' });
             }
-          } catch (e) { console.error(e); }
+          } catch (e) { console.error(e); try { await logger.logWarning('Interaction Reply Failed', 'Failed to inform user there is no player profile', { userId: interaction.user.id, customId: incomingCustomId, guildId: interaction.guildId, channelId: interaction.channelId, error: e instanceof Error ? e.message : String(e) }); } catch (err) { console.error('Logger failed', err); } }
           return;
         }
       }
@@ -167,10 +169,11 @@ client.on('interactionCreate', async interaction => {
         await quest.handleInteraction(interaction);
         } catch (e) {
         console.error('Error routing component interaction to quest:', e);
+        try { await logger.logError('Component Interaction Error', e, { userId: interaction.user.id, customId: incomingCustomId, token: transientToken, guildId: interaction.guildId, channelId: interaction.channelId, messageId: interaction.message?.id, playerId: player && player.id ? player.id : null }); } catch (err) { console.error('Logger failed', err); }
         if (!interaction.replied && !interaction.deferred) {
           await interaction.reply({ content: 'There was an error handling that interaction.', ephemeral: true });
         } else if (interaction.deferred) {
-          try { await interaction.editReply({ content: 'There was an error handling that interaction.' }); } catch (err) { console.error(err); }
+          try { await interaction.editReply({ content: 'There was an error handling that interaction.' }); } catch (err) { console.error(err); try { await logger.logWarning('EditReply Failed', 'Failed to edit reply after interaction error', { userId: interaction.user.id, error: err instanceof Error ? err.message : String(err) }); } catch (er) { console.error('Logger failed', er); } }
         }
       }
     }

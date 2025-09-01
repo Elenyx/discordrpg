@@ -5,6 +5,7 @@ const raceSteps = require('./RaceSpecificSteps');
 const { morganFightMiniGame } = require('../utils/MiniGames');
 const { generateToken, consumeToken, deleteToken } = require('../../utils/tokenStore');
 const { writeLog } = require('../../utils/fileLogger');
+const logger = require('../../utils/logger');
 
 class RomanceDawn extends BaseQuest {
     // static identifier used by the QuestManager registration
@@ -232,6 +233,7 @@ class RomanceDawn extends BaseQuest {
                 }
             } catch (e) {
                 console.error('safeUpdate: fallback failed:', e);
+                try { await logger.logWarning('Interaction Update Failed', 'safeUpdate fallback failed', { userId: interaction.user?.id, customId: interaction.customId, guildId: interaction.guildId, channelId: interaction.channelId, error: e instanceof Error ? e.message : String(e) }); } catch (err) { console.error('Logger failed', err); }
             }
         }
     }
@@ -309,7 +311,7 @@ class RomanceDawn extends BaseQuest {
                     // Persist current state so the "Try Again" flow has a baseline
                     if (this.player) {
                         this.player.activeQuestInstance = { state: this.state, currentStep: this.currentStep, custom: this.custom };
-                        try { if (typeof this.player.save === 'function') await this.player.save(); } catch (e) { console.error('Failed to save player after Morgan defeat', e); }
+                        try { if (typeof this.player.save === 'function') await this.player.save(); } catch (e) { console.error('Failed to save player after Morgan defeat', e); try { await logger.logWarning('Player Save Failed', 'Failed to save player after Morgan defeat', { userId: this.player.discordId || this.player.id, error: e instanceof Error ? e.message : String(e) }); } catch (err) { console.error('Logger failed', err); } }
                     }
 
                     // Create or rotate a transient token which stores retry count and minimal instance reference

@@ -1,5 +1,6 @@
 const { SlashCommandBuilder } = require('discord.js');
 const questManager = require('../quests/QuestManager');
+const logger = require('../utils/logger');
 const { Player } = require('../database/models'); 
 
 module.exports = {
@@ -34,6 +35,7 @@ module.exports = {
             await questManager.handleQuestCommand(subcommand, player, interaction);
         } catch (error) {
             console.error(error);
+            try { await logger.logError('Quest Command Error', error, { userId: interaction.user?.id, subcommand, guildId: interaction.guildId, channelId: interaction.channelId }); } catch (err) { console.error('Logger failed', err); }
             await interaction.reply('An error occurred while processing your quest command.');
         }
     }

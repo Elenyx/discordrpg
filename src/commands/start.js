@@ -11,6 +11,7 @@ const {
 } = require('discord.js');
 const { Player } = require('../../database');
 const { generateToken, deleteToken } = require('../utils/tokenStore');
+const logger = require('../utils/logger');
 
 const races = [
   { label: 'Human', value: 'Human', description: 'Versatile and adaptable fighters' },
@@ -236,6 +237,7 @@ module.exports = {
 
     } catch (error) {
       console.error('Error in start command:', error);
+  try { await logger.logError('Start Command Error', error, { userId: interaction.user?.id, guildId: interaction.guildId, channelId: interaction.channelId }); } catch (err) { console.error('Logger failed', err); }
 
       if (error.code === 'InteractionCollectorError' || error.message.includes('collector')) {
         const timeoutContainer = buildTextContainer(
@@ -252,17 +254,17 @@ module.exports = {
           0xe74c3c
         );
         // Use editReply if an interaction has already been replied to, otherwise reply.
-        if (interaction.replied || interaction.deferred) {
-            await interaction.editReply({
-                components: [errorContainer],
-                flags: MessageFlags.IsComponentsV2
-            }).catch(() => {});
-        } else {
-            await interaction.reply({
-                components: [errorContainer],
-                flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral
-            }).catch(() => {});
-        }
+    if (interaction.replied || interaction.deferred) {
+      await interaction.editReply({
+        components: [errorContainer],
+        flags: MessageFlags.IsComponentsV2
+      }).catch(async (e) => { console.error('editReply failed', e); try { await logger.logWarning('EditReply Failed', 'Failed to edit reply in /start error handler', { userId: interaction.user?.id, error: e instanceof Error ? e.message : String(e) }); } catch (err) { console.error('Logger failed', err); } });
+    } else {
+      await interaction.reply({
+        components: [errorContainer],
+        flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral
+      }).catch(async (e) => { console.error('reply failed', e); try { await logger.logWarning('Reply Failed', 'Failed to reply in /start error handler', { userId: interaction.user?.id, error: e instanceof Error ? e.message : String(e) }); } catch (err) { console.error('Logger failed', err); } });
+    }
       }
     }
   },
